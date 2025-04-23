@@ -1,18 +1,16 @@
 ﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
-using System.Reflection;
-
 namespace System.Collections.Generic
 {
-    public sealed class MultiMapValuesByKey<TKey, TValue> : IReadOnlyList<TValue>
+    public sealed class MultiDictionaryValuesByKey<TKey, TValue> : IReadOnlyList<TValue>, IReadOnlyCollection<TValue>
     {
-        private MultiMap<TKey, TValue> _map;
+        private MultiDictionary<TKey, TValue> _dictionary;
         private TKey _key;
 
-        public MultiMapValuesByKey(MultiMap<TKey, TValue> map, TKey key)
+        public MultiDictionaryValuesByKey(MultiDictionary<TKey, TValue> dictionary, TKey key)
         {
-            _map = map;
+            _dictionary = dictionary;
             _key = key;
         }
 
@@ -20,7 +18,7 @@ namespace System.Collections.Generic
         {
             get
             {
-                if (_map._storage.TryGetValue(_key, out var list))
+                if (_dictionary._storage.TryGetValue(_key, out var list))
                 {
                     return list.Count;
                 }
@@ -37,7 +35,7 @@ namespace System.Collections.Generic
         {
             get
             {
-                if (_map._storage.TryGetValue(_key, out var list))
+                if (_dictionary._storage.TryGetValue(_key, out var list))
                 {
                     return list[index];
                 }
@@ -50,13 +48,13 @@ namespace System.Collections.Generic
 
         public IEnumerator<TValue> GetEnumerator()
         {
-            if (_map._storage.TryGetValue(_key, out var list))
+            if (_dictionary._storage.TryGetValue(_key, out var list))
             {
                 return list.GetEnumerator();
             }
             else
             {
-                return new List<TValue>(0).GetEnumerator();
+                return new BinarySortedList<TValue>(0).GetEnumerator();
             }
         }
 
@@ -67,9 +65,9 @@ namespace System.Collections.Generic
 
         public int IndexOf(TValue item)
         {
-            if (_map._storage.TryGetValue(_key, out var list))
+            if (_dictionary._storage.TryGetValue(_key, out var list))
             {
-                return list.IndexOf(item);
+                return list.FindFirstIndex(item);
             }
             else
             {
@@ -79,12 +77,12 @@ namespace System.Collections.Generic
 
         public bool Contains(TValue item)
         {
-            return _map.Contains(_key, item);
+            return _dictionary.Contains(_key, item);
         }
 
         public void CopyTo(TValue[] array, int arrayIndex)
         {
-            if (_map._storage.TryGetValue(_key, out var list))
+            if (_dictionary._storage.TryGetValue(_key, out var list))
             {
                 list.CopyTo(array, arrayIndex);
             }
@@ -92,7 +90,7 @@ namespace System.Collections.Generic
 
         public bool Empty()
         {
-            if (_map._storage.TryGetValue(_key, out var list))
+            if (_dictionary._storage.TryGetValue(_key, out var list))
                 return list.Count == 0;
 
             return true;

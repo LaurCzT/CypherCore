@@ -390,6 +390,8 @@ namespace Game.Entities
     [StructLayout(LayoutKind.Explicit)]
     public struct ItemSubClass
     {
+        public static readonly int Max = ItemConst.MaxItemSubclassTotal;
+        public ItemSubClassMask GetItemSubClassMask() => new ItemSubClassMask(this);
         [FieldOffset(0)]
         public int data;
         [FieldOffset(0)]
@@ -440,5 +442,69 @@ namespace Game.Entities
 
         public static implicit operator ItemSubClass(int data) { return new ItemSubClass(data); }
         public static implicit operator int(ItemSubClass itemSubClass) { return itemSubClass.data; }
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct ItemSubClassMask
+    {
+        public static readonly ItemSubClassMask AllPermanent = new ItemSubClassMask(-1);
+        public static readonly ItemSubClassMask None = new ItemSubClassMask(0);
+        public bool HasItemSubClass(ItemSubClass subClass) => (data & new ItemSubClassMask(subClass)) != 0;
+
+        [FieldOffset(0)]
+        public int data;
+        [FieldOffset(0)]
+        public ItemSubClassConsumableMask Consumable;
+        [FieldOffset(0)]
+        public ItemSubClassContainerMask Container;
+        [FieldOffset(0)]
+        public ItemSubClassWeaponMask Weapon;
+        [FieldOffset(0)]
+        public ItemSubClassGemMask Gem;
+        [FieldOffset(0)]
+        public ItemSubClassArmorMask Armor;
+        [FieldOffset(0)]
+        public ItemSubClassReagentMask Reagent;
+        [FieldOffset(0)]
+        public ItemSubClassProjectileMask Projectile;
+        [FieldOffset(0)]
+        public ItemSubClassTradeGoodsMask TradeGoods;
+        [FieldOffset(0)]
+        public ItemSubclassItemEnhancementMask Enhancement;
+        [FieldOffset(0)]
+        public ItemSubClassRecipeMask Recipe;
+        [FieldOffset(0)]
+        public ItemSubClassMoneyMask Money;
+        [FieldOffset(0)]
+        public ItemSubClassQuiverMask Quiver;
+        [FieldOffset(0)]
+        public ItemSubClassQuestMask Quest;
+        [FieldOffset(0)]
+        public ItemSubClassKeyMask Key;
+        [FieldOffset(0)]
+        public ItemSubClassPermanentMask Permanent;
+        [FieldOffset(0)]
+        public ItemSubClassMiscMask Junk;
+        [FieldOffset(0)]
+        public ItemSubClassGlyphMask Glyph;
+        [FieldOffset(0)]
+        public ItemSubclassBattlePetMask BattlePet;
+        [FieldOffset(0)]
+        public ItemSubclassWowTokenMask WowToken;
+        [FieldOffset(0)]
+        public ItemSubclassProfessionMask Profession;
+
+        public ItemSubClassMask(int data = default)
+        {
+            this.data = data;
+        }
+
+        public ItemSubClassMask(ItemSubClass subClass)
+        {
+            this.data = 1 << subClass;
+        }
+
+        public static implicit operator ItemSubClassMask(int data) { return new ItemSubClassMask(data); }
+        public static implicit operator int(ItemSubClassMask itemSubClassMask) { return itemSubClassMask.data; }
     }
 }
