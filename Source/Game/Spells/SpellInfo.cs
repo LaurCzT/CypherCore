@@ -582,14 +582,19 @@ namespace Game.Spells
 
         public bool IsRangedWeaponSpell()
         {
-            return (SpellFamilyName == SpellFamilyNames.Hunter && !SpellFamilyFlags[1].HasAnyFlag(0x10000000u)) // for 53352, cannot find better way
-                || EquippedItemSubClassMask.HasAnyFlag((int)ItemSubClassWeaponMask.Ranged)
+            return DmgClass == SpellDmgClass.Ranged
+                || EquippedItemSubClassMask.Weapon.HasAnyFlag(ItemSubClassWeaponMask.Ranged)
                 || Attributes.HasAnyFlag(SpellAttr0.UsesRangedSlot);
         }
 
         public bool IsAutoRepeatRangedSpell()
         {
-            return HasAttribute(SpellAttr2.AutoRepeat);
+            return HasAttribute(SpellAttr2.AutoRepeat) && IsRangedWeaponSpell();
+        }
+
+        public bool IsUsesAmmo()
+        {
+            return HasAttribute(SpellAttr0.UsesRangedSlot) && DmgClass == SpellDmgClass.Ranged;
         }
 
         public bool HasInitialAggro()
@@ -2864,14 +2869,18 @@ namespace Game.Spells
             if (CastTimeEntry != null)
                 castTime = Time.Max(CastTimeEntry.Base, CastTimeEntry.Minimum);
 
-            if (castTime <= 0)
+            if (castTime < 0)
                 return Milliseconds.Zero;
 
             if (spell != null)
                 spell.GetCaster().ModSpellCastTime(this, ref castTime.Ticks, spell);
 
-            if (HasAttribute(SpellAttr0.UsesRangedSlot) && (!IsAutoRepeatRangedSpell()) && !HasAttribute(SpellAttr9.CooldownIgnoresRangedWeapon))
-                castTime += (Milliseconds)500;
+            // apply delay to ranged spells, except auto-shooting
+            if (IsRangedWeaponSpell() && Id != 75 && !HasAttribute(SpellAttr9.CooldownIgnoresRangedWeapon))
+            {
+                if (castTime < (Milliseconds)500)
+                    castTime = (Milliseconds)500;
+            }
 
             return (castTime > 0) ? castTime : Milliseconds.Zero;
         }
@@ -4167,7 +4176,7 @@ namespace Game.Spells
         public int[] ReagentCount = new int[SpellConst.MaxReagents];
         public List<SpellReagentsCurrencyRecord> ReagentsCurrency = new();
         public ItemClass EquippedItemClass { get; set; }
-        public int EquippedItemSubClassMask { get; set; }
+        public ItemSubClassMask EquippedItemSubClassMask { get; set; }
         public int EquippedItemInventoryTypeMask { get; set; }
         public int IconFileDataId { get; set; }
         public int ActiveIconFileDataId { get; set; }

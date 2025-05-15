@@ -3420,7 +3420,7 @@ namespace Game
                 cInfo.CreatureType = default_;
             }
 
-            if (cInfo.Family != CreatureFamily.None && !CliDB.CreatureFamilyStorage.ContainsKey((int)cInfo.Family))
+            if (cInfo.Family != CreatureFamily.None && !CliDB.CreatureFamilyStorage.ContainsKey(cInfo.Family))
             {
                 CreatureFamily default_ = CreatureFamily.None;
 
@@ -8011,7 +8011,10 @@ namespace Game
                 var pInfoMapEntry = petInfoStore.LookupByKey(creatureid);
 
                 if (pInfoMapEntry == null)
+                {
                     pInfoMapEntry = new PetLevelInfo[WorldConfig.Values[WorldCfg.MaxPlayerLevel].Int32];
+                    petInfoStore[creatureid] = pInfoMapEntry;
+                }
 
                 PetLevelInfo pLevelInfo = new();
                 pLevelInfo.health = result.Read<int>(2);

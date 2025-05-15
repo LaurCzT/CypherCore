@@ -1496,18 +1496,18 @@ namespace Game.Spells
 
             Player p_target = m_caster.ToPlayer();
 
-            uint subClassMask = (uint)m_spellInfo.EquippedItemSubClassMask;
+            ItemSubClassMask subClassMask = m_spellInfo.EquippedItemSubClassMask;
             if (m_spellInfo.EquippedItemClass == ItemClass.Weapon 
-                && !Convert.ToBoolean(p_target.GetWeaponProficiency() & subClassMask))
+                && !p_target.GetWeaponProficiency().HasFlag(subClassMask.Weapon))
             {
-                p_target.AddWeaponProficiency(subClassMask);
+                p_target.AddWeaponProficiency(subClassMask.Weapon);
                 p_target.SendProficiency(ItemClass.Weapon, p_target.GetWeaponProficiency());
             }
 
             if (m_spellInfo.EquippedItemClass == ItemClass.Armor 
-                && !Convert.ToBoolean(p_target.GetArmorProficiency() & subClassMask))
+                && !p_target.GetArmorProficiency().HasFlag(subClassMask.Armor))
             {
-                p_target.AddArmorProficiency(subClassMask);
+                p_target.AddArmorProficiency(subClassMask.Armor);
                 p_target.SendProficiency(ItemClass.Armor, p_target.GetArmorProficiency());
             }
         }
@@ -5092,12 +5092,12 @@ namespace Game.Spells
             for (; n_buttons != 0; --n_buttons, ++button_id)
             {
                 ActionButton ab = player.GetActionButton((byte)button_id);
-                if (ab == null || ab.GetButtonType() != ActionButtonType.Spell)
+                if (ab == null || ab.Type != ActionButtonType.Spell)
                     continue;
 
                 //! Action button data is unverified when it's set so it can be "hacked"
                 //! to contain invalid spells, so filter here.
-                int spell_id = ab.GetAction();
+                int spell_id = ab.Action;
                 if (spell_id == 0)
                     continue;
 

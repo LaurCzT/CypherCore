@@ -1049,7 +1049,7 @@ namespace Game.DataStorage
             if (petfamily == CreatureFamily.None)
                 return null;
 
-            CreatureFamilyRecord petFamily = CreatureFamilyStorage.LookupByKey((int)petfamily);
+            CreatureFamilyRecord petFamily = CreatureFamilyStorage.LookupByKey(petfamily);
             if (petFamily == null)
                 return "";
 
@@ -1359,7 +1359,7 @@ namespace Game.DataStorage
             return _itemCategoryConditions[categoryId];
         }
 
-        public int GetItemDisplayId(int itemId, int appearanceModId)
+        public int GetItemDisplayId(int itemId, int appearanceModId = 0)
         {
             ItemModifiedAppearanceRecord modifiedAppearance = GetItemModifiedAppearance(itemId, appearanceModId);
             if (modifiedAppearance != null)

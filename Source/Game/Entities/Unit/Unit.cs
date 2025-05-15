@@ -1713,23 +1713,39 @@ namespace Game.Entities
             SpellInfo autoRepeatSpellInfo = m_currentSpells[CurrentSpellTypes.AutoRepeat].m_spellInfo;
 
             // check "realtime" interrupts
-            // don't cancel spells which are affected by a SPELL_AURA_CAST_WHILE_WALKING effect
-            if ((IsMoving() && GetCurrentSpell(CurrentSpellTypes.AutoRepeat).CheckMovement() != SpellCastResult.SpellCastOk) 
-                || IsNonMeleeSpellCast(false, false, true, autoRepeatSpellInfo.Id == 75))
+            if ((GetTypeId() == TypeId.Player && ToPlayer().IsMoving()) || IsNonMeleeSpellCast(false, false, true, autoRepeatSpellInfo.Id == 75))
             {
                 // cancel wand shoot
                 if (autoRepeatSpellInfo.Id != 75)
                     InterruptSpell(CurrentSpellTypes.AutoRepeat);
+                
                 return;
             }
+            if (GetTypeId() == TypeId.Player)
+            {
+                Unit currentTarget = Global.ObjAccessor.GetUnit(this, GetTarget());
+                Spell spell = m_currentSpells[CurrentSpellTypes.AutoRepeat];
 
-            //// apply delay (Auto Shot (spellID 75) not affected)
-            //if (m_AutoRepeatFirstCast && GetAttackTimer(WeaponAttackType.RangedAttack) < (Milliseconds)500 && autoRepeatSpellInfo.Id != 75)
-            //    SetAttackTimer(WeaponAttackType.RangedAttack, (Milliseconds)500);
-            //m_AutoRepeatFirstCast = false;
+                if (spell.m_targets.GetUnitTarget() != currentTarget)
+                {
+                    if (currentTarget == null || spell.GetSpellInfo().CheckExplicitTarget(this, currentTarget) == SpellCastResult.BadTargets)
+                    {
+                        // In wotlk_classic, when changing the target for ranged auto attacks, the client does not send a new packet,
+                        // so the current target has to be checked manually when updating auto attacks.
+                        // if the wrong target was chosen, we should stop ranged autoattack.
+
+                        InterruptSpell(CurrentSpellTypes.AutoRepeat);
+                        return;
+                    }
+                    else
+                    {
+                        spell.m_targets.SetUnitTarget(currentTarget);
+                    }
+                }
+            }
 
             // castroutine
-            if (IsAttackReady(WeaponAttackType.RangedAttack) 
+            if (IsAttackReady(WeaponAttackType.RangedAttack)
                 && GetCurrentSpell(CurrentSpellTypes.AutoRepeat).GetState() != SpellState.Preparing)
             {
                 // Check if able to cast
@@ -1737,26 +1753,33 @@ namespace Game.Entities
                 if (result != SpellCastResult.SpellCastOk)
                 {
                     if (autoRepeatSpellInfo.Id != 75)
-                        InterruptSpell(CurrentSpellTypes.AutoRepeat);
-                    else if (GetTypeId() == TypeId.Player)
                     {
-                        Spell.SendCastResult(
-                            ToPlayer(), autoRepeatSpellInfo, 
-                            m_currentSpells[CurrentSpellTypes.AutoRepeat].m_SpellVisual, 
-                            m_currentSpells[CurrentSpellTypes.AutoRepeat].m_castId, 
-                            result);
+                        InterruptSpell(CurrentSpellTypes.AutoRepeat);
+                    }
+                    else if (this is Player player)
+                    {
+                        var currentTime = LoopTime.ServerTime;
+
+                        if (player.AutoRepeatNotifyState.CheckAndApply(result, currentTime, GetAttackTime(WeaponAttackType.RangedAttack))) // to prevent packet spamming
+                        {
+                            Spell.SendCastResult(
+                                player, autoRepeatSpellInfo,
+                                m_currentSpells[CurrentSpellTypes.AutoRepeat].m_SpellVisual,
+                                m_currentSpells[CurrentSpellTypes.AutoRepeat].m_castId,
+                                result);
+                        }
                     }
 
                     return;
                 }
 
                 // we want to shoot
-                Spell spell = new(this, autoRepeatSpellInfo, TriggerCastFlags.IgnoreGCD);
+                Spell spell = new(this, autoRepeatSpellInfo, TriggerCastFlags.FullMask);
                 spell.Prepare(m_currentSpells[CurrentSpellTypes.AutoRepeat].m_targets);
-            }
 
-            // all went good, reset attack
-            ResetAttackTimer(WeaponAttackType.RangedAttack);
+                // all went good, reset attack
+                ResetAttackTimer(WeaponAttackType.RangedAttack);
+            }
         }
 
         public PowerType CalculateDisplayPowerType()

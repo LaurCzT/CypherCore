@@ -2890,10 +2890,15 @@ namespace Game.Spells
             if (m_spellState == SpellState.Finished)
                 return;
 
+            m_autoRepeat = false;
+
+            // Unable to cancel flying projectiles
+            if (m_spellState == SpellState.Delayed && m_spellInfo.Speed > 0)
+                return;
+
             SpellState oldState = m_spellState;
             m_spellState = SpellState.Finished;
 
-            m_autoRepeat = false;
             switch (oldState)
             {
                 case SpellState.Preparing:
@@ -4138,7 +4143,11 @@ namespace Game.Spells
             */
 
             if (castFlags.HasFlag(SpellCastFlags.Projectile))
-                castData.AmmoDisplayID = GetSpellCastDataAmmo();
+            {
+                var ammoInfo = GetSpellCastDataAmmo();
+                castData.AmmoDisplayID = ammoInfo.ammoDisplayID;
+                castData.AmmoInventoryType = ammoInfo.ammoInventoryType;
+            }
 
             if (castFlags.HasFlag(SpellCastFlags.Immunity))
             {
@@ -4242,6 +4251,13 @@ namespace Game.Spells
                 castData.MissileTrajectory.Pitch = m_targets.GetPitch();
             }
 
+            if (castFlags.HasFlag(SpellCastFlags.Projectile))
+            {
+                var ammoInfo = GetSpellCastDataAmmo();
+                castData.AmmoDisplayID = ammoInfo.ammoDisplayID;
+                castData.AmmoInventoryType = ammoInfo.ammoInventoryType;
+            }
+
             packet.LogData.Initialize(this);
 
             m_caster.SendCombatLogMessage(packet);
@@ -4283,10 +4299,10 @@ namespace Game.Spells
                 m_channelTargetEffectMask = 0;
         }
 
-        int GetSpellCastDataAmmo()
+        (int? ammoDisplayID, InventoryType? ammoInventoryType) GetSpellCastDataAmmo()
         {
-            InventoryType ammoInventoryType = 0;
-            int ammoDisplayID = 0;
+            InventoryType? ammoInventoryType = null;
+            int? ammoDisplayID = null;
 
             Player playerCaster = m_caster.ToPlayer();
             if (playerCaster != null)
@@ -4294,13 +4310,30 @@ namespace Game.Spells
                 Item pItem = playerCaster.GetWeaponForAttack(WeaponAttackType.RangedAttack);
                 if (pItem != null)
                 {
-                    ammoInventoryType = pItem.GetTemplate().GetInventoryType();
-                    if (ammoInventoryType == InventoryType.Thrown)
-                        ammoDisplayID = pItem.GetDisplayId(playerCaster);
-                    else if (playerCaster.HasAura(46699))      // Requires No Ammo
+                    var itemInventoryType = pItem.GetTemplate().GetInventoryType();
+                    if (itemInventoryType == InventoryType.Thrown)
                     {
-                        ammoDisplayID = 5996;                   // normal arrow
-                        ammoInventoryType = InventoryType.Ammo;
+                        ammoDisplayID = pItem.GetDisplayId(playerCaster);
+                        ammoInventoryType = itemInventoryType;
+                    }
+                    else
+                    {
+                        int ammoID = playerCaster.m_activePlayerData.AmmoID;
+                        if (ammoID > 0)
+                        {
+                            ItemTemplate pProto = Global.ObjectMgr.GetItemTemplate(ammoID);
+                            if (pProto != null)
+                            {
+                                ammoDisplayID = pProto.GetDisplayInfoID();
+                                ammoInventoryType = pProto.GetInventoryType();
+                            }
+                        }
+                        else if (playerCaster.HasAura(46699))      // Requires No Ammo, used by Thori'dal, the Stars' Fury [item:34334]
+                        {
+                            // Thori'dal no longer needs to set these 
+                            // ammoDisplayID = 41489;                 // Monster - Special Arrow (Thori'dal) [item:37309]
+                            // ammoInventoryType = InventoryType.Ammo;
+                        }
                     }
                 }
             }
@@ -4309,8 +4342,6 @@ namespace Game.Spells
                 Unit unitCaster = m_caster.ToUnit();
                 if (unitCaster != null)
                 {
-                    int nonRangedAmmoDisplayID = 0;
-                    InventoryType nonRangedAmmoInventoryType = 0;
                     for (byte i = (int)WeaponAttackType.BaseAttack; i < (int)WeaponAttackType.Max; ++i)
                     {
                         int itemId = unitCaster.GetVirtualItemId(i);
@@ -4329,35 +4360,27 @@ namespace Game.Spells
                                             break;
                                         case ItemSubClassWeapon.Bow:
                                         case ItemSubClassWeapon.Crossbow:
-                                            ammoDisplayID = 5996;       // is this need fixing?
+                                            ammoDisplayID = 2414;
                                             ammoInventoryType = InventoryType.Ammo;
                                             break;
                                         case ItemSubClassWeapon.Gun:
-                                            ammoDisplayID = 5998;       // is this need fixing?
+                                            ammoDisplayID = 2418;
                                             ammoInventoryType = InventoryType.Ammo;
                                             break;
                                         default:
-                                            nonRangedAmmoDisplayID = Global.DB2Mgr.GetItemDisplayId(itemId, unitCaster.GetVirtualItemAppearanceMod(i));
-                                            nonRangedAmmoInventoryType = itemEntry.InventoryType;
                                             break;
                                     }
 
-                                    if (ammoDisplayID != 0)
+                                    if (ammoDisplayID.HasValue)
                                         break;
                                 }
                             }
                         }
                     }
-
-                    if (ammoDisplayID == 0 && ammoInventoryType == 0)
-                    {
-                        ammoDisplayID = nonRangedAmmoDisplayID;
-                        ammoInventoryType = nonRangedAmmoInventoryType;
-                    }
                 }
             }
 
-            return ammoDisplayID;
+            return (ammoDisplayID, ammoInventoryType);
         }
 
         static (int, SpellHealPredictionType) CalcPredictedHealing(SpellInfo spellInfo, Unit unitCaster, Unit target, int castItemEntry, int castItemLevel, Spell spell, bool withPeriodic)
@@ -5127,7 +5150,7 @@ namespace Game.Spells
                             return SpellCastResult.NotReady;
                     }
 
-                    if ((IsAutoRepeat() || (int)m_spellInfo.CategoryId == 76) 
+                    if ((IsAutoRepeat() || m_spellInfo.CategoryId == SpellCategories.RangedOneShoot) 
                         && !m_caster.ToUnit().IsAttackReady(WeaponAttackType.RangedAttack))
                         return SpellCastResult.DontReport;
                 }
@@ -5222,6 +5245,18 @@ namespace Game.Spells
 
                     if (unitCaster.IsInCombat() && !m_spellInfo.CanBeUsedInCombat(unitCaster))
                         return SpellCastResult.AffectingCombat;
+                }
+
+                // cancel autorepeat spells if cast start when moving
+                // (not wand currently autorepeat cast delayed to moving stop anyway in spell update code)
+                if (unitCaster.GetTypeId() == TypeId.Player && unitCaster.ToPlayer().IsMoving() && (!unitCaster.IsCharmed() || !unitCaster.GetCharmerGUID().IsCreature()))
+                {
+                    // skip stuck spell to allow use it in falling case and apply spell limitations at movement
+                    if ((!unitCaster.HasUnitMovementFlag(MovementFlag.FallingFar) || !m_spellInfo.HasEffect(SpellEffectName.Stuck)) &&
+                        (IsAutoRepeat() || m_spellInfo.HasAuraInterruptFlag(SpellAuraInterruptFlags.Standing)))
+                    {
+                        return SpellCastResult.Moving;
+                    }
                 }
 
                 // Check vehicle flags
@@ -7175,6 +7210,45 @@ namespace Game.Spells
                             case ItemSubClassWeapon.Gun:
                             case ItemSubClassWeapon.Bow:
                             case ItemSubClassWeapon.Crossbow:
+                            {
+                                int ammo = player.GetUsedAmmoId();
+                                if (ammo == 0)
+                                {
+                                    // Requires No Ammo
+                                    if (player.HasAura(46699))
+                                        break;                      // skip other checks
+
+                                    return SpellCastResult.NoAmmo;
+                                }
+
+                                ItemTemplate ammoProto = Global.ObjectMgr.GetItemTemplate(ammo);
+                                if (ammoProto == null)
+                                    return SpellCastResult.NeedAmmo;
+
+                                if (ammoProto.GetClass() != ItemClass.Projectile)
+                                    return SpellCastResult.NeedAmmo;
+
+                                // check ammo ws. weapon compatibility
+                                switch (item.GetTemplate().GetSubClass().Weapon)
+                                {
+                                    case ItemSubClassWeapon.Bow:
+                                    case ItemSubClassWeapon.Crossbow:
+                                        if (ammoProto.GetSubClass().Projectile != ItemSubClassProjectile.Arrow)
+                                            return SpellCastResult.NeedAmmo;
+                                        break;
+                                    case ItemSubClassWeapon.Gun:
+                                        if (ammoProto.GetSubClass().Projectile != ItemSubClassProjectile.Bullet)
+                                            return SpellCastResult.NeedAmmo;
+                                        break;
+                                }
+
+                                if (!player.HasItemCount(ammo))
+                            {
+                                    player.SetUsedAmmoId(0);
+                                    return SpellCastResult.NoAmmo;
+                                }
+                                break;
+                            }
                             case ItemSubClassWeapon.Wand:
                                 break;
                             default:
@@ -7600,6 +7674,42 @@ namespace Game.Spells
             return false;
         }
 
+        void TakeAmmo()
+        {
+            // Only players use ammo
+            if (m_caster is not Player player)
+                return;
+
+            // only ranged
+            if (m_attackType != WeaponAttackType.RangedAttack)
+                return;
+
+            Item item = player.GetWeaponForAttack(WeaponAttackType.RangedAttack);
+            if (item == null || item.IsBroken())
+                return;
+
+            if (item.GetTemplate().GetInventoryType() == InventoryType.Thrown)
+            {
+                if (item.GetMaxStackCount() == 1)
+                {
+                    // decrease durability for non-stackable throw weapon
+                    player.DurabilityPointsLoss(item, 1);
+                }
+                else
+                {
+                    // decrease items amount for stackable throw weapon
+                    int count = 1;
+                    player.DestroyItemCount(item, ref count, true);
+                }
+            }
+            else
+            {
+                int ammo = player.GetUsedAmmoId();
+                if (ammo != 0)
+                    player.DestroyItemCount(ammo, 1, true);
+            }
+        }
+
         void HandleLaunchPhase()
         {
             // handle effects with SPELL_EFFECT_HANDLE_LAUNCH mode
@@ -7613,6 +7723,21 @@ namespace Game.Spells
             }
 
             PrepareTargetProcessing();
+
+            // Take ammunition if the ranged attack requires ammunition
+            if (m_caster is Player player)
+            {
+                bool usesAmmo = m_spellInfo.IsUsesAmmo();
+                if (player.HasAuraTypeWithAffectMask(AuraType.AbilityConsumeNoAmmo, m_spellInfo))
+                    usesAmmo = false;
+
+                // Do not consume ammo for the triggered AoE ticks of Volley (Hunter spell)
+                if (IsTriggered() && m_spellInfo.SpellFamilyName == SpellFamilyNames.Hunter && m_spellInfo.IsTargetingArea())
+                    usesAmmo = false;
+
+                if (usesAmmo)
+                    TakeAmmo();
+            }
 
             foreach (TargetInfo target in m_UniqueTargetInfo)
                 PreprocessSpellLaunch(target);

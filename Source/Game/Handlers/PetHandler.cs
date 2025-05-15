@@ -43,8 +43,8 @@ namespace Game
             ObjectGuid guid1 = packet.PetGUID;         //pet guid
             ObjectGuid guid2 = packet.TargetGUID;      //tag guid
 
-            int spellid = UnitActionBarEntry.UNIT_ACTION_BUTTON_ACTION(packet.Action);
-            ActiveStates flag = (ActiveStates)UnitActionBarEntry.UNIT_ACTION_BUTTON_TYPE(packet.Action);             //delete = 0x07 CastSpell = C1
+            int spellid = packet.Button.Action;
+            ActiveStates flag = packet.Button.State;             //delete = 0x07 CastSpell = C1
 
             // used also for charmed creature
             Unit pet = Global.ObjAccessor.GetUnit(GetPlayer(), guid1);
@@ -72,7 +72,7 @@ namespace Game
             }
 
             // @todo allow control charmed player?
-            if (pet.IsTypeId(TypeId.Player) && !(flag == ActiveStates.Command && spellid == (uint)CommandStates.Attack))
+            if (pet.IsTypeId(TypeId.Player) && !(flag == ActiveStates.Command && spellid == (int)CommandStates.Attack))
                 return;
 
             if (GetPlayer().m_Controlled.Count == 1)
@@ -85,8 +85,10 @@ namespace Game
                 //If a pet is dismissed, m_Controlled will change
                 List<Unit> controlled = new();
                 foreach (var unit in GetPlayer().m_Controlled)
+                {
                     if (unit.GetEntry() == pet.GetEntry() && unit.IsAlive())
                         controlled.Add(unit);
+                }
 
                 foreach (var unit in controlled)
                     HandlePetActionHelper(unit, guid1, spellid, flag, guid2, packet.ActionPosition.X, packet.ActionPosition.Y, packet.ActionPosition.Z);
@@ -495,14 +497,15 @@ namespace Game
 
             List<Unit> pets = new();
             foreach (Unit controlled in _player.m_Controlled)
+            {
                 if (controlled.GetEntry() == pet.GetEntry() && controlled.IsAlive())
                     pets.Add(controlled);
+            }
 
             int position = packet.Index;
-            int actionData = packet.Action;
 
-            int spell_id = UnitActionBarEntry.UNIT_ACTION_BUTTON_ACTION(actionData);
-            ActiveStates act_state = (ActiveStates)UnitActionBarEntry.UNIT_ACTION_BUTTON_TYPE(actionData);
+            int spell_id = packet.ActionButton.Action;
+            ActiveStates act_state = packet.ActionButton.State;
 
             Log.outDebug(LogFilter.Network, 
                 $"Player {GetPlayer().GetName()} has changed pet spell action. " +
@@ -522,26 +525,34 @@ namespace Game
                         if (act_state == ActiveStates.Enabled)
                         {
                             if (petControlled.GetTypeId() == TypeId.Unit && petControlled.IsPet())
+                            {
                                 ((Pet)petControlled).ToggleAutocast(spellInfo, true);
+                            }
                             else
                             {
                                 foreach (var unit in GetPlayer().m_Controlled)
+                                {
                                     if (unit.GetEntry() == petControlled.GetEntry())
                                         unit.GetCharmInfo().ToggleCreatureAutocast(spellInfo, true);
                             }
+                        }
                         }
                         //sign for no/turn off autocast
                         else if (act_state == ActiveStates.Disabled)
                         {
                             if (petControlled.GetTypeId() == TypeId.Unit && petControlled.IsPet())
+                            {
                                 petControlled.ToPet().ToggleAutocast(spellInfo, false);
+                            }
                             else
                             {
                                 foreach (var unit in GetPlayer().m_Controlled)
+                                {
                                     if (unit.GetEntry() == petControlled.GetEntry())
                                         unit.GetCharmInfo().ToggleCreatureAutocast(spellInfo, false);
                             }
                         }
+                    }
                     }
 
                     charmInfo.SetActionBar((byte)position, spell_id, act_state);

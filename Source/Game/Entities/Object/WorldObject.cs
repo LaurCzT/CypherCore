@@ -760,7 +760,7 @@ namespace Game.Entities
                     for (byte i = 0; i < PlayerConst.MaxActionButtons; ++i)
                     {
                         if (player.GetActionButton(i) is ActionButton button)
-                            data.WriteInt32(button.GetAction());
+                            data.WriteInt32(button.Action);
                         else
                             data.WriteUInt32(0);
                     }
@@ -772,6 +772,7 @@ namespace Game.Entities
                 Conversation self = ToConversation();
                 if (data.WriteBit(self.GetTextureKitId() != 0))
                     data.WriteInt32(self.GetTextureKitId());
+
                 data.FlushBits();
             }
         }

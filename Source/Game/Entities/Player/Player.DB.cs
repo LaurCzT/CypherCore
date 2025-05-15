@@ -683,7 +683,7 @@ namespace Game.Entities
 
                     ActionButton ab = AddActionButton(button, action, type);
                     if (ab != null)
-                        ab.uState = ActionButtonUpdateState.UnChanged;
+                        ab.State = ActionButtonUpdateState.UnChanged;
                     else
                     {
                         Log.outError(LogFilter.Player, 
@@ -693,7 +693,7 @@ namespace Game.Entities
 
                         // Will deleted in DB at next save (it can create data until save but marked as deleted)
                         m_actionButtons[button] = new ActionButton();
-                        m_actionButtons[button].uState = ActionButtonUpdateState.Deleted;
+                        m_actionButtons[button].State = ActionButtonUpdateState.Deleted;
                     }
                 } while (result.NextRow());
             }
@@ -2155,7 +2155,7 @@ namespace Game.Entities
 
             foreach (var pair in m_actionButtons.ToList())
             {
-                switch (pair.Value.uState)
+                switch (pair.Value.State)
                 {
                     case ActionButtonUpdateState.New:
                         stmt = CharacterDatabase.GetPreparedStatement(CharStatements.INS_CHAR_ACTION);
@@ -2163,23 +2163,23 @@ namespace Game.Entities
                         stmt.SetUInt8(1, GetActiveTalentGroup());
                         stmt.SetInt32(2, traitConfigId);
                         stmt.SetUInt8(3, pair.Key);
-                        stmt.SetInt32(4, pair.Value.GetAction());
-                        stmt.SetUInt8(5, (byte)pair.Value.GetButtonType());
+                        stmt.SetInt32(4, pair.Value.Action);
+                        stmt.SetUInt8(5, (byte)pair.Value.Type);
                         trans.Append(stmt);
 
-                        pair.Value.uState = ActionButtonUpdateState.UnChanged;
+                        pair.Value.State = ActionButtonUpdateState.UnChanged;
                         break;
                     case ActionButtonUpdateState.Changed:
                         stmt = CharacterDatabase.GetPreparedStatement(CharStatements.UPD_CHAR_ACTION);
-                        stmt.SetInt32(0, pair.Value.GetAction());
-                        stmt.SetUInt8(1, (byte)pair.Value.GetButtonType());
+                        stmt.SetInt32(0, pair.Value.Action);
+                        stmt.SetUInt8(1, (byte)pair.Value.Type);
                         stmt.SetInt64(2, GetGUID().GetCounter());
                         stmt.SetUInt8(3, pair.Key);
                         stmt.SetUInt8(4, GetActiveTalentGroup());
                         stmt.SetInt32(5, traitConfigId);
                         trans.Append(stmt);
 
-                        pair.Value.uState = ActionButtonUpdateState.UnChanged;
+                        pair.Value.State = ActionButtonUpdateState.UnChanged;
                         break;
                     case ActionButtonUpdateState.Deleted:
                         stmt = CharacterDatabase.GetPreparedStatement(CharStatements.DEL_CHAR_ACTION_BY_BUTTON_SPEC);
@@ -2928,7 +2928,7 @@ namespace Game.Entities
             var powers = new int[(int)PowerType.MaxPerClass];
             for (var i = 0; i < powers.Length; ++i)
                 powers[i] = result.Read<int>(fieldIndex++);
-
+            var usedAmmoID = result.Read<int>(fieldIndex++);
             var instance_id = result.Read<int>(fieldIndex++);
             var lootSpecId = (ChrSpecialization)result.Read<int>(fieldIndex++);
             var exploredZones = result.Read<string>(fieldIndex++);
@@ -3032,7 +3032,6 @@ namespace Game.Entities
             {
                 do
                 {
-
                     ChrCustomizationChoice choice = new();
                     choice.ChrCustomizationOptionID = customizationsResult.Read<int>(0);
                     choice.ChrCustomizationChoiceID = customizationsResult.Read<int>(1);
@@ -3545,7 +3544,9 @@ namespace Game.Entities
             }
 
             for (; loadedPowers < (int)PowerType.MaxPerClass; ++loadedPowers)
-                SetUpdateFieldValue(ref m_values.ModifyValue(m_unitData).ModifyValue(m_unitData.Power, loadedPowers), 0);           
+                SetUpdateFieldValue(ref m_values.ModifyValue(m_unitData).ModifyValue(m_unitData.Power, loadedPowers), 0);
+
+            SetUsedAmmoId(usedAmmoID);
 
             Log.outDebug(LogFilter.Player, 
                 $"Player.LoadFromDB: The value of player {GetName()} after load item and aura is: ");            
@@ -3769,6 +3770,7 @@ namespace Game.Entities
                 for (int i = 0; i < (int)PowerType.MaxPerClass; ++i)
                     stmt.SetInt32(index++, m_unitData.Power[i]);
 
+                stmt.SetInt32(index++, GetUsedAmmoId());
                 stmt.SetUInt32(index++, GetSession().GetLatency());
                 stmt.SetInt32(index++, (int)GetLootSpecId());
 
@@ -3904,6 +3906,7 @@ namespace Game.Entities
                 for (int i = 0; i < (int)PowerType.MaxPerClass; ++i)
                     stmt.SetInt32(index++, m_unitData.Power[i]);
 
+                stmt.SetInt32(index++, GetUsedAmmoId());
                 stmt.SetUInt32(index++, GetSession().GetLatency());
                 stmt.SetUInt32(index++, (uint)GetLootSpecId());
 
