@@ -829,7 +829,7 @@ namespace Game.Entities
             {
                 do
                 {
-                    AddSpell(result.Read<int>(0), (ActiveStates)result.Read<byte>(1), PetSpellState.Unchanged);
+                    AddSpell(result.Read<int>(0), (ActiveStates)result.Read<uint>(1), PetSpellState.Unchanged);
                 }
                 while (result.NextRow());
             }
@@ -864,14 +864,14 @@ namespace Game.Entities
                         stmt = CharacterDatabase.GetPreparedStatement(CharStatements.INS_PET_SPELL);
                         stmt.SetInt32(0, GetCharmInfo().GetPetNumber());
                         stmt.SetInt32(1, pair.Key);
-                        stmt.SetUInt8(2, (byte)pair.Value.ActiveState);
+                        stmt.SetUInt32(2, (uint)pair.Value.ActiveState);
                         trans.Append(stmt);
                         break;
                     case PetSpellState.New:
                         stmt = CharacterDatabase.GetPreparedStatement(CharStatements.INS_PET_SPELL);
                         stmt.SetInt32(0, GetCharmInfo().GetPetNumber());
                         stmt.SetInt32(1, pair.Key);
-                        stmt.SetUInt8(2, (byte)pair.Value.ActiveState);
+                        stmt.SetUInt32(2, (uint)pair.Value.ActiveState);
                         trans.Append(stmt);
                         break;
                     case PetSpellState.Unchanged:
@@ -1792,13 +1792,13 @@ namespace Game.Entities
     }
     
     [Flags]
-    public enum ActiveStates : byte
+    public enum ActiveStates : int
     {
         Passive = 0x01,
         Defensive = 0x02,
         Agressive = 0x04,
-        AutoCast = 0x40,
-        Spell = 0x80,
+        AutoCast = 0x80,
+        Spell = 0x100,
 
         Disabled = Spell | Passive,
         Enabled = Spell | AutoCast,

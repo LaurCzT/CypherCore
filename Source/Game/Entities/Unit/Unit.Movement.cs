@@ -76,6 +76,18 @@ namespace Game.Entities
             return GetLiquidStatus().HasFlag(ZLiquidStatus.OceanFloor);
         }
 
+        private void GetInWaterState(ZLiquidStatus liquidStatus, out bool isSubmerged, out bool isUndernWater)
+        {
+            isSubmerged = false;
+            isUndernWater = false;
+
+            if (HasUnitMovementFlag(MovementFlag.Swimming))
+            {
+                isSubmerged = liquidStatus.HasAnyFlag(ZLiquidStatus.InWater);
+                isUndernWater = liquidStatus.HasAnyFlag(ZLiquidStatus.UnderWater);
+            }
+        }
+
         void PropagateSpeedChange() { GetMotionMaster().PropagateSpeedChange(); }
 
         public Speed GetSpeed(UnitMoveType mtype)
@@ -363,14 +375,14 @@ namespace Game.Entities
             if (playerMover != null)
             {
                 MoveSetFlag packet = new(enable ? ServerOpcodes.MoveEnableTransitionBetweenSwimAndFly : ServerOpcodes.MoveDisableTransitionBetweenSwimAndFly);
-                packet.MoverGUID = GetGUID();
-                packet.SequenceIndex = m_movementCounter++;
-                playerMover.SendPacket(packet);
+                    packet.MoverGUID = GetGUID();
+                    packet.SequenceIndex = m_movementCounter++;
+                    playerMover.SendPacket(packet);
 
-                MoveUpdate moveUpdate = new();
-                moveUpdate.Status = m_movementInfo;
-                SendMessageToSet(moveUpdate, playerMover);
-            }
+                    MoveUpdate moveUpdate = new();
+                    moveUpdate.Status = m_movementInfo;
+                    SendMessageToSet(moveUpdate, playerMover);
+                }
 
             return true;
         }
@@ -786,9 +798,7 @@ namespace Game.Entities
 
             int areaId = GetAreaId();
             int ridingSkill = 5000;
-            AreaMountFlags mountFlags = 0;
-            bool isSubmerged;
-            bool isInWater;
+            AreaMountFlags areaMountFlags = 0;
 
             if (IsTypeId(TypeId.Player))
                 ridingSkill = ToPlayer().GetSkillValue(SkillType.Riding);
@@ -796,18 +806,14 @@ namespace Game.Entities
             if (HasAuraType(AuraType.MountRestrictions))
             {
                 foreach (AuraEffect auraEffect in GetAuraEffectsByType(AuraType.MountRestrictions))
-                    mountFlags |= (AreaMountFlags)auraEffect.GetMiscValue();
+                    areaMountFlags |= (AreaMountFlags)auraEffect.GetMiscValue();
             }
             else
             {
                 AreaTableRecord areaTable = CliDB.AreaTableStorage.LookupByKey(areaId);
                 if (areaTable != null)
-                    mountFlags = areaTable.MountFlags;
-            }
-
-            ZLiquidStatus liquidStatus = GetMap().GetLiquidStatus(GetPhaseShift(), GetPositionX(), GetPositionY(), GetPositionZ());
-            isSubmerged = liquidStatus.HasAnyFlag(ZLiquidStatus.UnderWater) || HasUnitMovementFlag(MovementFlag.Swimming);
-            isInWater = liquidStatus.HasAnyFlag(ZLiquidStatus.InWater | ZLiquidStatus.UnderWater);
+                    areaMountFlags = areaTable.MountFlags;
+            }            
 
             foreach (var mountTypeXCapability in capabilities)
             {
@@ -818,36 +824,10 @@ namespace Game.Entities
                 if (ridingSkill < mountCapability.ReqRidingSkill)
                     continue;
 
-                if (!mountCapability.HasFlag(MountCapabilityFlags.IgnoreRestrictions))
-                {
-                    if (mountCapability.HasFlag(MountCapabilityFlags.Ground) && !mountFlags.HasFlag(AreaMountFlags.AllowGroundMounts))
-                        continue;
-                    if (mountCapability.HasFlag(MountCapabilityFlags.Flying) && !mountFlags.HasFlag(AreaMountFlags.AllowFlyingMounts))
-                        continue;
-                    if (mountCapability.HasFlag(MountCapabilityFlags.Float) && !mountFlags.HasFlag(AreaMountFlags.AllowSurfaceSwimmingMounts))
-                        continue;
-                    if (mountCapability.HasFlag(MountCapabilityFlags.Underwater) && !mountFlags.HasFlag(AreaMountFlags.AllowUnderwaterSwimmingMounts))
-                        continue;
-                }
+                if (!CheckAreaMountRestrictions(mountCapability.Flags, areaMountFlags))
+                    continue;
 
-                if (!isSubmerged)
-                {
-                    if (!isInWater)
-                    {
-                        // player is completely out of water
-                        if (!mountCapability.HasFlag(MountCapabilityFlags.Ground))
-                            continue;
-                    }
-                    // player is on water surface
-                    else if (!mountCapability.HasFlag(MountCapabilityFlags.Float))
-                        continue;
-                }
-                else if (isInWater)
-                {
-                    if (!mountCapability.HasFlag(MountCapabilityFlags.Underwater))
-                        continue;
-                }
-                else if (!mountCapability.HasFlag(MountCapabilityFlags.Float))
+                if (!CheckTerrainMountRestrictions(mountCapability.Flags, GetLiquidStatus()))
                     continue;
 
                 if (mountCapability.ReqMapID != -1 &&
@@ -868,7 +848,75 @@ namespace Game.Entities
                 return mountCapability;
             }
 
-            return null;
+            return null;            
+        }
+
+        private bool CheckTerrainMountRestrictions(MountCapabilityFlags mountCapabilityFlags, ZLiquidStatus liquidStatus)
+        {
+            GetInWaterState(liquidStatus, out bool isSubmerged, out bool isUndernWater);
+            bool isFlying = HasUnitMovementFlag(MovementFlag.Flying);
+
+            if (isSubmerged)
+            {
+                if (isUndernWater)
+                {
+                    if (!mountCapabilityFlags.HasFlag(MountCapabilityFlags.Underwater))
+                        return false;
+                }
+                else if (!mountCapabilityFlags.HasFlag(MountCapabilityFlags.Float))
+                {
+                    return false;
+                }
+            }
+            else if (isFlying)
+            {
+                if (!mountCapabilityFlags.HasFlag(MountCapabilityFlags.Flying))
+                    return false;
+            }
+            else if (!mountCapabilityFlags.HasFlag(MountCapabilityFlags.Ground))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool CheckAreaMountRestrictions(MountCapabilityFlags MountCapabilityFlags, AreaMountFlags AreaMountFlags)
+        {
+            /*
+             * This check is only an attempt to understand how it is implemented officially.
+             * If you check simply for the presence of a flag, nothing will work.
+             * Zones do not contain direct permission to use one or another flag.
+             * Vanilla locations do not have such flags at all.
+             * The logic of this check works as long as Blizzard preserves the relative order in the client's data.
+            */
+
+            if (!MountCapabilityFlags.HasFlag(MountCapabilityFlags.IgnoreRestrictions))
+            {
+                // Living underwater and flying mounts do not know how to jump
+                if (!MountCapabilityFlags.HasFlag(MountCapabilityFlags.Jump))
+                {
+                    if (!AreaMountFlags.HasFlag(AreaMountFlags.AllowFlyingMounts))
+                    {
+                        if (MountCapabilityFlags.HasFlag(MountCapabilityFlags.Flying))
+                        {
+                            if (!AreaMountFlags.HasFlag(AreaMountFlags.AllowGroundMounts) && MountCapabilityFlags.HasFlag(MountCapabilityFlags.Ground))
+                                return false;
+                        }
+                    }
+
+                    if (!AreaMountFlags.HasFlag(AreaMountFlags.AllowUnderwaterSwimmingMounts))
+                    {
+                        if (MountCapabilityFlags.HasFlag(MountCapabilityFlags.Underwater))
+                        {
+                            if (!AreaMountFlags.HasFlag(AreaMountFlags.AllowSurfaceSwimmingMounts) && MountCapabilityFlags.HasFlag(MountCapabilityFlags.Float))
+                                return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
         }
 
         public void UpdateMountCapability()
@@ -906,14 +954,15 @@ namespace Game.Entities
                 return;
 
             // remove appropriate auras if we are swimming/not swimming respectively
-            if (IsInWater())
+            GetInWaterState(GetLiquidStatus(), out bool isSubmerged, out bool isUndernWater);
+            if (isUndernWater)
                 RemoveAurasWithInterruptFlags(SpellAuraInterruptFlags.UnderWater);
-            else
+            if (!isSubmerged)
                 RemoveAurasWithInterruptFlags(SpellAuraInterruptFlags.AboveWater);
 
             // liquid aura handling
             LiquidTypeRecord curLiquid = null;
-            if (IsInWater() && newLiquidData != null)
+            if (isSubmerged && newLiquidData != null)
                 curLiquid = CliDB.LiquidTypeStorage.LookupByKey(newLiquidData.entry);
             if (curLiquid != _lastLiquid)
             {
