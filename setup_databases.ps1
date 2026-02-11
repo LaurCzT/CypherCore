@@ -1,4 +1,4 @@
-$password = "Fondat,.12"
+$password = "root"
 $mysqlIdx = "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe"
 $argsBase = "-u", "root", "-p$password"
 
