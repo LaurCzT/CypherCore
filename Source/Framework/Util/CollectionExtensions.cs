@@ -217,6 +217,11 @@ namespace System.Collections.Generic
             return source.Shuffle().Take(count);
         }
 
+        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source)
+        {
+            return source.OrderBy(x => RandomHelper.Rand32(int.MaxValue));
+        }
+
         public static T SelectRandomElementByWeight<T>(this IEnumerable<T> sequence, Func<T, float> weightSelector)
         {
             float totalWeight = sequence.Sum(weightSelector);

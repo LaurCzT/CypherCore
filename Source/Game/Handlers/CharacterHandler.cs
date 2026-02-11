@@ -381,15 +381,6 @@ namespace Game
                         return;
                     }
                 }
-                else
-                {
-                    Log.outError(LogFilter.Cheat,
-                        $"Expansion {GetAccountExpansion()} account:[{GetAccountId()}] tried to Create character for race/class combination " +
-                        $"that is missing requirements in db ({charCreate.CreateInfo.RaceId}/{charCreate.CreateInfo.ClassId})");
-                }
-
-                SendCharCreate(ResponseCodes.CharCreateExpansionClass);
-                return;
             }
 
             if (!HasPermission(RBACPermissions.SkipCheckCharacterCreationRacemask))
@@ -2721,6 +2712,68 @@ namespace Game
 
             SendPacket(response);
         }
+
+        [WorldPacketHandler(ClientOpcodes.GetAccountCharacterList, Status = SessionStatus.Authed)]
+        void HandleGetAccountCharacterList(GetAccountCharacterListRequest request)
+        {
+            EnumCharactersQueryHolder holder = new();
+            if (!holder.Initialize(GetAccountId(), false, false))
+            {
+                HandleGetAccountCharacterListCallback(holder, request.Token);
+                return;
+            }
+
+            AddQueryHolderCallback(DB.Characters.DelayQueryHolder(holder)).AfterComplete(result => HandleGetAccountCharacterListCallback((EnumCharactersQueryHolder)result, request.Token));
+        }
+
+        void HandleGetAccountCharacterListCallback(EnumCharactersQueryHolder holder, uint token)
+        {
+            GetAccountCharacterListResult response = new();
+            response.Token = token;
+
+            SQLResult result = holder.GetResult(EnumCharacterQueryLoad.Characters);
+            if (result != null && !result.IsEmpty())
+            {
+                do
+                {
+                    EnumCharactersResult.CharacterInfo charInfo = new(result.GetFields());
+
+                    AccountCharacterListEntry entry = new();
+                    entry.AccountId = ObjectGuid.Create(HighGuid.WowAccount, GetAccountId());
+                    entry.CharacterGuid = charInfo.Guid;
+                    entry.RealmVirtualAddress = (uint)Global.WorldMgr.GetRealm().Id.Index;
+                    entry.Race = (Race)charInfo.RaceId;
+                    entry.Class = (Class)charInfo.ClassId;
+                    entry.Sex = (Gender)charInfo.SexId;
+                    entry.Level = charInfo.ExperienceLevel;
+                    entry.LastLoginUnixSec = (ulong)charInfo.LastPlayedTime;
+                    entry.Name = charInfo.Name;
+                    entry.RealmName = Global.WorldMgr.GetRealm().Name;
+
+                    response.CharacterList.Add(entry);
+
+                } while (result.NextRow());
+            }
+            SendPacket(response);
+        }
+
+        [WorldPacketHandler(ClientOpcodes.QueuedMessagesEnd, Status = SessionStatus.Authed)]
+        void HandleQueuedMessagesEnd(QueuedMessagesEnd packet)
+        {
+            // Do nothing
+        }
+
+        [WorldPacketHandler(ClientOpcodes.BattlePayGetProductList, Status = SessionStatus.Authed)]
+        void HandleBattlePayGetProductList(BattlePayGetProductList packet)
+        {
+            // Do nothing
+        }
+
+        [WorldPacketHandler(ClientOpcodes.BattlePayGetPurchaseList, Status = SessionStatus.Authed)]
+        void HandleBattlePayGetPurchaseList(BattlePayGetPurchaseList packet)
+        {
+            // Do nothing
+        }
     }
 
     public class LoginQueryHolder : SQLQueryHolder<PlayerLoginQueryLoad>
@@ -3021,5 +3074,7 @@ namespace Game
     {
         Characters,
         Customizations
+
+
     }
 }

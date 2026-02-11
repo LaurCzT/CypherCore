@@ -333,7 +333,8 @@ namespace Framework.Cryptography
                 x -= new BigInteger(fix, true);
             }
 
-            return x % (N - 1);
+            BigInteger res = x % (N - 1);
+            return res < 0 ? res + (N - 1) : res;
         }
 
         public override BigInteger GetN() { return N; }

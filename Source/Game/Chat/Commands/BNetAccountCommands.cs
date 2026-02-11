@@ -13,41 +13,50 @@ namespace Game.Chat.Commands
         [Command("create", RBACPermissions.CommandBnetAccountCreate, true)]
         static bool HandleAccountCreateCommand(CommandHandler handler, string accountName, string password, bool? createGameAccount)
         {
-            if (accountName.IsEmpty() || !accountName.Contains('@'))
+            try
             {
-                handler.SendSysMessage(CypherStrings.AccountInvalidBnetName);
-                return false;
+                if (accountName.IsEmpty() || !accountName.Contains('@'))
+                {
+                    handler.SendSysMessage(CypherStrings.AccountInvalidBnetName);
+                    return false;
+                }
+
+                string gameAccountName;
+                switch (Global.BNetAccountMgr.CreateBattlenetAccount(accountName, password, createGameAccount.GetValueOrDefault(true), out gameAccountName))
+                {
+                    case AccountOpResult.Ok:
+                        if (createGameAccount.HasValue && createGameAccount.Value)
+                            handler.SendSysMessage(CypherStrings.AccountCreatedBnetWithGame, accountName, gameAccountName);
+                        else
+                            handler.SendSysMessage(CypherStrings.AccountCreated, accountName);
+
+                        if (handler.GetSession() != null)
+                        {
+                            Log.outInfo(LogFilter.Player, 
+                                $"Account: {handler.GetSession().GetAccountId()} (IP: {handler.GetSession().GetRemoteAddress()}) " +
+                                $"Character:[{handler.GetSession().GetPlayer().GetName()}] ({handler.GetSession().GetPlayer().GetGUID()}) " +
+                                $"created Battle.net account " +
+                                $"{accountName}{(createGameAccount.Value ? " with game account " : "")}{(createGameAccount.Value ? gameAccountName : "")}");
+                        }
+                        break;
+                    case AccountOpResult.NameTooLong:
+                        handler.SendSysMessage(CypherStrings.AccountNameTooLong);
+                        return false;
+                    case AccountOpResult.PassTooLong:
+                        handler.SendSysMessage(CypherStrings.AccountPassTooLong);
+                        return false;
+                    case AccountOpResult.NameAlreadyExist:
+                        handler.SendSysMessage(CypherStrings.AccountAlreadyExist);
+                        return false;
+                    default:
+                        break;
+                }
             }
-
-            string gameAccountName;
-            switch (Global.BNetAccountMgr.CreateBattlenetAccount(accountName, password, createGameAccount.GetValueOrDefault(true), out gameAccountName))
+            catch (Exception ex)
             {
-                case AccountOpResult.Ok:
-                    if (createGameAccount.HasValue && createGameAccount.Value)
-                        handler.SendSysMessage(CypherStrings.AccountCreatedBnetWithGame, accountName, gameAccountName);
-                    else
-                        handler.SendSysMessage(CypherStrings.AccountCreated, accountName);
-
-                    if (handler.GetSession() != null)
-                    {
-                        Log.outInfo(LogFilter.Player, 
-                            $"Account: {handler.GetSession().GetAccountId()} (IP: {handler.GetSession().GetRemoteAddress()}) " +
-                            $"Character:[{handler.GetSession().GetPlayer().GetName()}] ({handler.GetSession().GetPlayer().GetGUID()}) " +
-                            $"created Battle.net account " +
-                            $"{accountName}{(createGameAccount.Value ? " with game account " : "")}{(createGameAccount.Value ? gameAccountName : "")}");
-                    }
-                    break;
-                case AccountOpResult.NameTooLong:
-                    handler.SendSysMessage(CypherStrings.AccountNameTooLong);
-                    return false;
-                case AccountOpResult.PassTooLong:
-                    handler.SendSysMessage(CypherStrings.AccountPassTooLong);
-                    return false;
-                case AccountOpResult.NameAlreadyExist:
-                    handler.SendSysMessage(CypherStrings.AccountAlreadyExist);
-                    return false;
-                default:
-                    break;
+                Log.outError(LogFilter.Server, $"Exception in HandleAccountCreateCommand: {ex}");
+                handler.SendSysMessage($"An error occurred while creating the account: {ex.Message}");
+                return false;
             }
 
             return true;

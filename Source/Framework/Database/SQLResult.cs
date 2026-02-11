@@ -145,6 +145,7 @@ namespace Framework.Database
         object[] _currentRow;
 
         public SQLFields(object[] row) { _currentRow = row; }
+        public int Count => _currentRow.Length;
 
         public T Read<T>(int column)
         {

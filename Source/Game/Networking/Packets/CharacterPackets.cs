@@ -29,22 +29,20 @@ namespace Game.Networking.Packets
             _worldPacket.WriteBit(IsNewPlayerRestrictionSkipped);
             _worldPacket.WriteBit(IsNewPlayerRestricted);
             _worldPacket.WriteBit(IsNewPlayer);
-            _worldPacket.WriteBit(IsTrialAccountRestricted);
             _worldPacket.WriteBit(DisabledClassesMask.HasValue);
+            _worldPacket.WriteBit(false); // AlliedRacesCreationAllowed
+            _worldPacket.FlushBits();
+
             _worldPacket.WriteInt32(Characters.Count);
             _worldPacket.WriteInt32(MaxCharacterLevel);
             _worldPacket.WriteInt32(RaceUnlockData.Count);
             _worldPacket.WriteInt32(UnlockedConditionalAppearances.Count);
-            _worldPacket.WriteInt32(RaceLimitDisables.Count);
 
             if (DisabledClassesMask.HasValue)
-                _worldPacket.WriteInt32(DisabledClassesMask.Value);
+                _worldPacket.WriteUInt32((uint)DisabledClassesMask.Value);
 
             foreach (UnlockedConditionalAppearance unlockedConditionalAppearance in UnlockedConditionalAppearances)
                 unlockedConditionalAppearance.Write(_worldPacket);
-
-            foreach (RaceLimitDisableInfo raceLimitDisableInfo in RaceLimitDisables)
-                raceLimitDisableInfo.Write(_worldPacket);
 
             foreach (CharacterInfo charInfo in Characters)
                 charInfo.Write(_worldPacket);
@@ -66,7 +64,6 @@ namespace Game.Networking.Packets
         public List<CharacterInfo> Characters = new(); // all characters on the list
         public List<RaceUnlock> RaceUnlockData = new(); //
         public List<UnlockedConditionalAppearance> UnlockedConditionalAppearances = new();
-        public List<RaceLimitDisableInfo> RaceLimitDisables = new();
 
         public class CharacterInfo
         {
@@ -104,7 +101,7 @@ namespace Game.Networking.Packets
                 if (fields.Read<ulong>(18) != 0)
                     Flags |= CharacterFlags.LockedByBilling;
 
-                if (WorldConfig.Values[WorldCfg.DeclinedNamesUsed].Bool && !string.IsNullOrEmpty(fields.Read<string>(28)))
+                if (WorldConfig.Values[WorldCfg.DeclinedNamesUsed].Bool && fields.Count > 28 && !string.IsNullOrEmpty(fields.Read<string>(28)))
                     Flags |= CharacterFlags.Declined;
 
                 if (atLoginFlags.HasAnyFlag(AtLoginFlags.Customize))
@@ -152,6 +149,8 @@ namespace Game.Networking.Packets
                     BackgroundColor = fields.Read<int>(27)
                 };
 
+                Customizations = new();
+
                 int equipmentFieldsPerSlot = 5;
 
                 for (var slot = 0; slot < VisualItems.Capacity && (slot + 1) * equipmentFieldsPerSlot <= equipment.Length; ++slot)
@@ -180,13 +179,27 @@ namespace Game.Networking.Packets
                 data.WriteInt32(Customizations.Count);
 
                 data.WriteUInt8(ExperienceLevel);
-                data.WriteInt32(ZoneId);
-                data.WriteInt32(MapId);
+                data.WriteUInt32((uint)ZoneId);
+                data.WriteUInt32((uint)MapId);
                 data.WriteVector3(PreloadPos);
                 data.WritePackedGuid(GuildGuid);
-                data.WriteUInt32((uint)Flags);
-                data.WriteUInt32((uint)Flags2);
+
+                uint clientFlags = 0;
+                if (Flags.HasFlag(CharacterFlags.Rename)) clientFlags |= 0x01;
+                if (Flags.HasFlag(CharacterFlags.Resting)) clientFlags |= 0x02;
+                if (Flags.HasFlag(CharacterFlags.Ghost)) clientFlags |= 0x2000;
+                //if (Flags.HasFlag(CharacterFlags.LockedByBilling)) clientFlags |= 0x01000000;
+                if (Flags.HasFlag(CharacterFlags.Declined)) clientFlags |= 0x02000000;
+
+                uint clientFlags2 = 0;
+                if (Flags2.HasFlag(CharacterCustomizeFlags.Customize)) clientFlags2 |= 0x01;
+                if (Flags2.HasFlag(CharacterCustomizeFlags.Faction)) clientFlags2 |= 0x02;
+                if (Flags2.HasFlag(CharacterCustomizeFlags.Race)) clientFlags2 |= 0x04;
+
+                data.WriteUInt32(clientFlags);
+                data.WriteUInt32(clientFlags2);
                 data.WriteUInt32(Flags3);
+                
                 data.WriteUInt32(PetCreatureDisplayId);
                 data.WriteUInt32(PetExperienceLevel);
                 data.WriteUInt32(PetCreatureFamilyId);
@@ -197,17 +210,20 @@ namespace Game.Networking.Packets
                 foreach (var visualItem in VisualItems)
                     visualItem.Write(data);
 
-                data.WriteInt64(LastPlayedTime);
-                data.WriteInt16(SpecID);
-                data.WriteInt32(Unknown703);
-                data.WriteInt32(LastLoginVersion);
+                data.WriteUInt64((ulong)LastPlayedTime);
+                data.WriteUInt16((ushort)SpecID);
+                data.WriteUInt32((uint)Unknown703);
+                data.WriteUInt32((uint)LastLoginVersion);
                 data.WriteUInt32(Flags4);
                 data.WriteInt32(MailSenders.Count);
                 data.WriteInt32(MailSenderTypes.Count);
                 data.WriteUInt32(OverrideSelectScreenFileDataID);
 
                 foreach (ChrCustomizationChoice customization in Customizations)
-                    customization.Write(data);
+                {
+                    data.WriteUInt32((uint)customization.ChrCustomizationOptionID);
+                    data.WriteUInt32((uint)customization.ChrCustomizationChoiceID);
+                }
 
                 foreach (var mailSenderType in MailSenderTypes)
                     data.WriteUInt32(mailSenderType);
@@ -216,9 +232,8 @@ namespace Game.Networking.Packets
                 data.WriteBit(FirstLogin);
                 data.WriteBit(BoostInProgress);
                 data.WriteBits(unkWod61x, 5);
-                data.WriteBits(0, 2); //unknown
-                data.WriteBit(RpeResetAvailable);
-                data.WriteBit(RpeResetQuestClearAvailable);
+                data.WriteBit(false);
+                data.WriteBit(true); // ExpansionChosen (Fixes the "Choose Expansion" restriction)
 
                 foreach (string str in MailSenders)
                     data.WriteBits(str.GetByteCount() + 1, 6);
@@ -226,10 +241,8 @@ namespace Game.Networking.Packets
                 data.FlushBits();
 
                 foreach (string str in MailSenders)
-                {
-                    if (!str.IsEmpty())
+                    if (!string.IsNullOrEmpty(str))
                         data.WriteCString(str);
-                }
 
                 data.WriteString(Name);
             }
@@ -241,7 +254,7 @@ namespace Game.Networking.Packets
             public byte RaceId;
             public Class ClassId;
             public byte SexId;
-            public List<ChrCustomizationChoice> Customizations;
+            public List<ChrCustomizationChoice> Customizations = new();
             public byte ExperienceLevel;
             public int ZoneId;
             public int MapId;
@@ -263,7 +276,7 @@ namespace Game.Networking.Packets
             public uint PetCreatureFamilyId;
             public bool BoostInProgress; // @todo
             public uint[] ProfessionIds = new uint[2];      // @todo
-            public Array<VisualItemInfo> VisualItems = new(34); // It was : (InventorySlots.ReagentBagEnd);
+            public Array<VisualItemInfo> VisualItems = new(23, new VisualItemInfo()); // 23 for Classic 1.14
             public List<string> MailSenders = new();
             public List<uint> MailSenderTypes = new();
             public bool RpeResetAvailable;
@@ -276,7 +289,7 @@ namespace Game.Networking.Packets
                 {
                     data.WriteUInt32(DisplayId);
                     data.WriteUInt32(DisplayEnchantId);
-                    data.WriteInt32(SecondaryItemModifiedAppearanceID);
+                    data.WriteUInt32((uint)SecondaryItemModifiedAppearanceID);
                     data.WriteUInt8(InvType);
                     data.WriteUInt8(Subclass);
                 }
@@ -352,7 +365,10 @@ namespace Game.Networking.Packets
 
         public uint SequenceIndex;
         public string Name;
+        public uint RealmVirtualAddress;
+        public uint RealmName;
     }
+
 
     class CheckCharacterNameAvailabilityResult : ServerPacket
     {
@@ -381,8 +397,8 @@ namespace Game.Networking.Packets
             CreateInfo = new CharacterCreateInfo();
             int nameLength = _worldPacket.ReadBits<int>(6);
             bool hasTemplateSet = _worldPacket.HasBit();
-            CreateInfo.IsTrialBoost = _worldPacket.HasBit();
             CreateInfo.UseNPE = _worldPacket.HasBit();
+            CreateInfo.IsTrialBoost = _worldPacket.HasBit();
 
             CreateInfo.RaceId = (Race)_worldPacket.ReadUInt8();
             CreateInfo.ClassId = (Class)_worldPacket.ReadUInt8();
@@ -628,8 +644,8 @@ namespace Game.Networking.Packets
         public override void Read()
         {
             UndeleteInfo = new CharacterUndeleteInfo();
-            _worldPacket.WriteInt32(UndeleteInfo.ClientToken);
-            _worldPacket.WritePackedGuid(UndeleteInfo.CharacterGuid);
+            UndeleteInfo.ClientToken = _worldPacket.ReadInt32();
+            UndeleteInfo.CharacterGuid = _worldPacket.ReadPackedGuid();
         }
 
         public CharacterUndeleteInfo UndeleteInfo;
@@ -682,6 +698,7 @@ namespace Game.Networking.Packets
         {
             Guid = _worldPacket.ReadPackedGuid();
             FarClip = _worldPacket.ReadFloat();
+            _worldPacket.HasBit(); // Read the extra bit
         }
 
         public ObjectGuid Guid;      // Guid of the player that is logging in
@@ -1170,4 +1187,6 @@ namespace Game.Networking.Packets
         // Server side data
         public string Name;
     }
+
+
 }

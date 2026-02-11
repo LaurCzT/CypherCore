@@ -289,7 +289,7 @@ namespace Game.Networking.Packets
             hash.Process((uint)Payload.Where.Type);
             hash.Finish(BitConverter.GetBytes(Payload.Port));
 
-            Payload.Signature = RsaCrypt.RSA.SignHash(hash.Digest, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1).Reverse().ToArray();
+            Payload.Signature = Enumerable.Reverse(RsaCrypt.RSA.SignHash(hash.Digest, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)).ToArray();
 
             _worldPacket.WriteBytes(Payload.Signature, Payload.Signature.Length);
             _worldPacket.WriteBytes(whereBuffer);
@@ -402,7 +402,7 @@ namespace Game.Networking.Packets
             toSign.Process(BitConverter.GetBytes(Enabled), 1);
             toSign.Finish(EnableEncryptionSeed, 16);
 
-            _worldPacket.WriteBytes(Ed25519.Sign(toSign.Digest, expandedPrivateKey, 0, EnableEncryptionContext));
+            _worldPacket.WriteBytes(Enumerable.Reverse(RsaCrypt.RSA.SignHash(toSign.Digest, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)).ToArray());
             _worldPacket.WriteBit(Enabled);
             _worldPacket.FlushBits();
         }

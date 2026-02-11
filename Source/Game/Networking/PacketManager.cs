@@ -7,6 +7,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 
 namespace Game.Networking
 {
@@ -15,11 +16,16 @@ namespace Game.Networking
         public static void Initialize()
         {
             Assembly currentAsm = Assembly.GetExecutingAssembly();
+            Log.outInfo(LogFilter.ServerLoading, $"Registering Opcodes from assembly: {currentAsm.FullName}");
             foreach (var type in currentAsm.GetTypes())
             {
-                foreach (var methodInfo in type.GetMethods(BindingFlags.Instance | BindingFlags.NonPublic))
+                foreach (var methodInfo in type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
                 {
-                    foreach (var msgAttr in methodInfo.GetCustomAttributes<WorldPacketHandlerAttribute>())
+                    var attributes = methodInfo.GetCustomAttributes<WorldPacketHandlerAttribute>().ToList();
+                    if (attributes.Count > 0)
+                        Log.outInfo(LogFilter.ServerLoading, $"Found {attributes.Count} attributes on {type.Name}.{methodInfo.Name}");
+                    
+                    foreach (var msgAttr in attributes)
                     {
                         if (msgAttr == null)
                             continue;
@@ -34,7 +40,7 @@ namespace Game.Networking
                         if (_clientPacketTable.ContainsKey(msgAttr.Opcode))
                         {
                             Log.outError(LogFilter.Network, 
-                                $"Tried to override OpcodeHandler of {_clientPacketTable[msgAttr.Opcode]} " +
+                                $"Tried to override OpcodeHandler of {_clientPacketTable[msgAttr.Opcode].Method.Name} " +
                                 $"with {methodInfo.Name} (Opcode {msgAttr.Opcode})");
                             continue;
                         }
@@ -47,15 +53,16 @@ namespace Game.Networking
                             continue;
                         }
 
-                        if (parameters[0].ParameterType.BaseType != typeof(ClientPacket))
+                        if (!typeof(ClientPacket).IsAssignableFrom(parameters[0].ParameterType))
                         {
                             Log.outError(LogFilter.Network, 
-                                $"Method: {methodInfo.Name} has wrong BaseType");
+                                $"Method: {methodInfo.Name} parameter {parameters[0].ParameterType.Name} does not inherit from ClientPacket");
                             continue;
                         }
 
-                        _clientPacketTable[msgAttr.Opcode] = 
-                            new PacketHandler(methodInfo, msgAttr.Status, msgAttr.Processing, parameters[0].ParameterType);
+                        Log.outInfo(LogFilter.ServerLoading, $"Registered Opcode Handler: {msgAttr.Opcode} ({methodInfo.Name})");
+
+                        _clientPacketTable.TryAdd(msgAttr.Opcode, new PacketHandler(methodInfo, msgAttr.Status, msgAttr.Processing, parameters[0].ParameterType));
                     }
                 }
             }
@@ -114,6 +121,7 @@ namespace Game.Networking
     {
         public PacketHandler(MethodInfo info, SessionStatus status, PacketProcessing processingplace, Type type)
         {
+            Method = info;
             methodCaller = (Action<WorldSession, ClientPacket>)GetType().GetMethod(
                 "CreateDelegate", BindingFlags.Static | BindingFlags.NonPublic).MakeGenericMethod(type).Invoke(null, [info]);
 
@@ -121,6 +129,8 @@ namespace Game.Networking
             ProcessingPlace = processingplace;
             packetType = type;
         }
+
+        public MethodInfo Method;
 
         public void Invoke(WorldSession session, WorldPacket packet)
         {

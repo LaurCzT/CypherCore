@@ -440,6 +440,7 @@ namespace Game.DataStorage
             uint loadedFileCount = 0;
             GameTable<T> ReadGameTable<T>(string fileName) where T : new()
             {
+                Log.outInfo(LogFilter.ServerLoading, $"Loading GameTable: {fileName}");
                 return GameTableReader.Read<T>(gtPath, fileName, ref loadedFileCount);
             }
 

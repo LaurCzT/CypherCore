@@ -24,7 +24,7 @@ namespace Framework.IO
                 deflateStream.Flush();
             }
             buffer.WriteBytes(ms.ToArray());
-            buffer.WriteBytes(BitConverter.GetBytes(adler32).Reverse().ToArray());
+            buffer.WriteBytes(Enumerable.Reverse(BitConverter.GetBytes(adler32)).ToArray());
 
             return buffer.GetData();
         }

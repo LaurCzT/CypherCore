@@ -522,7 +522,7 @@ namespace Game.Networking
                 digestKeyHash.Finish(buildInfo.Mac64AuthSeed);
             else
             {
-                Log.outError(LogFilter.Network, 
+                Log.outError(LogFilter.Network,
                     $"WorldSocket.HandleAuthSession: " +
                     $"Authentication failed for account: {account.game.Id} ('{authSession.RealmJoinTicket}') " +
                     $"address: {address}");
@@ -530,7 +530,6 @@ namespace Game.Networking
                 CloseSocket();
                 return;
             }
-
             HmacSha256 hmac = new(digestKeyHash.Digest);
             hmac.Process(authSession.LocalChallenge, authSession.LocalChallenge.Count);
             hmac.Process(_serverChallenge, 16);
@@ -539,7 +538,7 @@ namespace Game.Networking
             // Check that Key and account name are the same on client and server
             if (!hmac.Digest.Compare(authSession.Digest))
             {
-                Log.outError(LogFilter.Network, 
+                Log.outError(LogFilter.Network,
                     $"WorldSocket.HandleAuthSession: " +
                     $"Authentication failed for account: {account.game.Id} ('{authSession.RealmJoinTicket}') " +
                     $"address: {address}");

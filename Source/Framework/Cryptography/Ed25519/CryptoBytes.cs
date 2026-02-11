@@ -261,8 +261,7 @@ namespace Framework.Cryptography.Ed25519
             int leadingZeroCount = input.TakeWhile(c => c == '1').Count();
             var leadingZeros = Enumerable.Repeat((byte)0, leadingZeroCount);
             var bytesWithoutLeadingZeros =
-                intData.ToByteArray()
-                .Reverse()// to big endian
+                Enumerable.Reverse(intData.ToByteArray())
                 .SkipWhile(b => b == 0);//strip sign byte
             var result = leadingZeros.Concat(bytesWithoutLeadingZeros).ToArray();
             return result;
