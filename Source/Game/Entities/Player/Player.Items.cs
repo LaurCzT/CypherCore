@@ -4995,10 +4995,7 @@ namespace Game.Entities
                             if (playerClass == Class.Warlock)
                                 slots[0] = EquipmentSlot.Ranged;
                             break;
-                        case ItemSubClassArmor.Sigil:
-                            if (playerClass == Class.DeathKnight)
-                                slots[0] = EquipmentSlot.Ranged;
-                            break;
+
                     }
                     break;
                 }

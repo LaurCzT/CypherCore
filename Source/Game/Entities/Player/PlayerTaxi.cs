@@ -25,13 +25,7 @@ namespace Game.Entities
         public void InitTaxiNodesForLevel(Race race, Class chrClass, int level)
         {
             // class specific initial known nodes
-            if (chrClass == Class.DeathKnight)
-            {
-                var factionMask = Player.TeamForRace(race) == Team.Horde ? CliDB.HordeTaxiNodesMask : CliDB.AllianceTaxiNodesMask;
-                m_taximask = new byte[factionMask.Length];
-                for (int i = 0; i < factionMask.Length; ++i)
-                    m_taximask[i] |= (byte)(CliDB.OldContinentsNodesMask[i] & factionMask[i]);
-            }
+
 
             // race specific initial known nodes: capital and taxi hub masks
             switch (race)
@@ -40,9 +34,7 @@ namespace Game.Entities
                 case Race.Dwarf:
                 case Race.NightElf:
                 case Race.Gnome:
-                case Race.Draenei:
-                case Race.Worgen:
-                case Race.PandarenAlliance:
+
                     SetTaximaskNode(2);     // Stormwind, Elwynn
                     SetTaximaskNode(6);     // Ironforge, Dun Morogh
                     SetTaximaskNode(26);    // Lor'danel, Darkshore
@@ -54,9 +46,7 @@ namespace Game.Entities
                 case Race.Undead:
                 case Race.Tauren:
                 case Race.Troll:
-                case Race.BloodElf:
-                case Race.Goblin:
-                case Race.PandarenHorde:
+
                     SetTaximaskNode(11);    // Undercity, Tirisfal
                     SetTaximaskNode(22);    // Thunder Bluff, Mulgore
                     SetTaximaskNode(23);    // Orgrimmar, Durotar

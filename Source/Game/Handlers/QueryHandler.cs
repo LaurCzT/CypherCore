@@ -29,6 +29,19 @@ namespace Game
             SendPacket(response);
         }
 
+        [WorldPacketHandler(ClientOpcodes.QueryPlayerName, Processing = PacketProcessing.Inplace)]
+        void HandleQueryPlayerName(QueryPlayerName queryPlayerName)
+        {
+            QueryPlayerNameResponse response = new();
+            response.Player = queryPlayerName.Player;
+
+            BuildNameQueryData(queryPlayerName.Player, out NameCacheLookupResult lookupData);
+            response.Result = lookupData.Result;
+            response.Data = lookupData.Data;
+
+            SendPacket(response);
+        }
+
         public void BuildNameQueryData(ObjectGuid guid, out NameCacheLookupResult lookupData)
         {
             lookupData = new();

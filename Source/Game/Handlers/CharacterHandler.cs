@@ -413,6 +413,78 @@ namespace Game
                 }
             }
 
+            // Classic Era Race/Class Validation
+            bool isValidCombination = false;
+            switch (charCreate.CreateInfo.RaceId)
+            {
+                case Race.Human:
+                    isValidCombination = charCreate.CreateInfo.ClassId == Class.Mage ||
+                                         charCreate.CreateInfo.ClassId == Class.Paladin ||
+                                         charCreate.CreateInfo.ClassId == Class.Priest ||
+                                         charCreate.CreateInfo.ClassId == Class.Rogue ||
+                                         charCreate.CreateInfo.ClassId == Class.Warlock ||
+                                         charCreate.CreateInfo.ClassId == Class.Warrior;
+                    break;
+                case Race.Dwarf:
+                    isValidCombination = charCreate.CreateInfo.ClassId == Class.Hunter ||
+                                         charCreate.CreateInfo.ClassId == Class.Paladin ||
+                                         charCreate.CreateInfo.ClassId == Class.Priest ||
+                                         charCreate.CreateInfo.ClassId == Class.Rogue ||
+                                         charCreate.CreateInfo.ClassId == Class.Warrior;
+                    break;
+                case Race.NightElf:
+                    isValidCombination = charCreate.CreateInfo.ClassId == Class.Druid ||
+                                         charCreate.CreateInfo.ClassId == Class.Hunter ||
+                                         charCreate.CreateInfo.ClassId == Class.Priest ||
+                                         charCreate.CreateInfo.ClassId == Class.Rogue ||
+                                         charCreate.CreateInfo.ClassId == Class.Warrior;
+                    break;
+                case Race.Gnome:
+                    isValidCombination = charCreate.CreateInfo.ClassId == Class.Mage ||
+                                         charCreate.CreateInfo.ClassId == Class.Rogue ||
+                                         charCreate.CreateInfo.ClassId == Class.Warlock ||
+                                         charCreate.CreateInfo.ClassId == Class.Warrior;
+                    break;
+                case Race.Orc:
+                    isValidCombination = charCreate.CreateInfo.ClassId == Class.Hunter ||
+                                         charCreate.CreateInfo.ClassId == Class.Rogue ||
+                                         charCreate.CreateInfo.ClassId == Class.Shaman ||
+                                         charCreate.CreateInfo.ClassId == Class.Warlock ||
+                                         charCreate.CreateInfo.ClassId == Class.Warrior;
+                    break;
+                case Race.Undead:
+                    isValidCombination = charCreate.CreateInfo.ClassId == Class.Mage ||
+                                         charCreate.CreateInfo.ClassId == Class.Priest ||
+                                         charCreate.CreateInfo.ClassId == Class.Rogue ||
+                                         charCreate.CreateInfo.ClassId == Class.Warlock ||
+                                         charCreate.CreateInfo.ClassId == Class.Warrior;
+                    break;
+                case Race.Tauren:
+                    isValidCombination = charCreate.CreateInfo.ClassId == Class.Druid ||
+                                         charCreate.CreateInfo.ClassId == Class.Hunter ||
+                                         charCreate.CreateInfo.ClassId == Class.Shaman ||
+                                         charCreate.CreateInfo.ClassId == Class.Warrior;
+                    break;
+                case Race.Troll:
+                    isValidCombination = charCreate.CreateInfo.ClassId == Class.Hunter ||
+                                         charCreate.CreateInfo.ClassId == Class.Mage ||
+                                         charCreate.CreateInfo.ClassId == Class.Priest ||
+                                         charCreate.CreateInfo.ClassId == Class.Rogue ||
+                                         charCreate.CreateInfo.ClassId == Class.Shaman ||
+                                         charCreate.CreateInfo.ClassId == Class.Warrior;
+                    break;
+                default:
+                    isValidCombination = false;
+                    break;
+            }
+
+            if (!isValidCombination)
+            {
+                Log.outError(LogFilter.Network, $"Invalid Race/Class combination: Race {charCreate.CreateInfo.RaceId}, Class {charCreate.CreateInfo.ClassId}");
+                SendCharCreate(ResponseCodes.CharCreateDisabled);
+                return;
+            }
+
             // prevent character creating with invalid name
             if (!ObjectManager.NormalizePlayerName(ref charCreate.CreateInfo.Name))
             {
@@ -481,16 +553,8 @@ namespace Game
                     }
                 }
 
-                int demonHunterReqLevel = WorldConfig.Values[WorldCfg.CharacterCreatingMinLevelForDemonHunter].Int32;
-                bool hasDemonHunterReqLevel = demonHunterReqLevel == 0;
-                int evokerReqLevel = WorldConfig.Values[WorldCfg.CharacterCreatingMinLevelForEvoker].Int32;
-                bool hasEvokerReqLevel = (evokerReqLevel == 0);
                 bool allowTwoSideAccounts = !Global.WorldMgr.IsPvPRealm() || HasPermission(RBACPermissions.TwoSideCharacterCreation);
                 int skipCinematics = WorldConfig.Values[WorldCfg.SkipCinematics].Int32;
-                bool checkClassLevelReqs = (createInfo.ClassId == Class.DemonHunter || createInfo.ClassId == Class.Evoker)
-                                            && !HasPermission(RBACPermissions.SkipCheckCharacterCreationDemonHunter);
-                int evokerLimit = WorldConfig.Values[WorldCfg.CharacterCreatingEvokersPerRealm].Int32;
-                bool hasEvokerLimit = evokerLimit != 0;
 
                 void finalizeCharacterCreation(SQLResult result1)
                 {
@@ -499,26 +563,6 @@ namespace Game
                     {
                         Team team = Player.TeamForRace(createInfo.RaceId);
                         byte accRace = result1.Read<byte>(1);
-                        byte accClass = result1.Read<byte>(2);
-
-                        if (checkClassLevelReqs)
-                        {
-                            if (!hasDemonHunterReqLevel)
-                            {
-                                byte accLevel = result1.Read<byte>(0);
-                                if (accLevel >= demonHunterReqLevel)
-                                    hasDemonHunterReqLevel = true;
-                            }
-                            if (!hasEvokerReqLevel)
-                            {
-                                byte accLevel = result1.Read<byte>(0);
-                                if (accLevel >= evokerReqLevel)
-                                    hasEvokerReqLevel = true;
-                            }
-                        }
-
-                        if (accClass == (byte)Class.Evoker)
-                            --evokerLimit;
 
                         // need to check team only for first character
                         // @todo what to if account already has characters of both races?
@@ -537,61 +581,22 @@ namespace Game
 
                         // search same race for cinematic or same class if need
                         // @todo check if cinematic already shown? (already logged in?; cinematic field)
-                        while ((skipCinematics == 1 && !haveSameRace) || createInfo.ClassId == Class.DemonHunter || createInfo.ClassId == Class.Evoker)
+                        while (skipCinematics == 1 && !haveSameRace)
                         {
                             if (!result1.NextRow())
                                 break;
 
                             accRace = result1.Read<byte>(1);
-                            accClass = result1.Read<byte>(2);
 
                             if (!haveSameRace)
                                 haveSameRace = createInfo.RaceId == (Race)accRace;
-
-                            if (checkClassLevelReqs)
-                            {
-                                if (!hasDemonHunterReqLevel)
-                                {
-                                    byte acc_level = result1.Read<byte>(0);
-                                    if (acc_level >= demonHunterReqLevel)
-                                        hasDemonHunterReqLevel = true;
-                                }
-                                if (!hasEvokerReqLevel)
-                                {
-                                    byte accLevel = result1.Read<byte>(0);
-                                    if (accLevel >= evokerReqLevel)
-                                        hasEvokerReqLevel = true;
-                                }
-                            }
-                            if (accClass == (byte)Class.Evoker)
-                                --evokerLimit;
                         }
-                    }
-
-                    if (checkClassLevelReqs)
-                    {
-                        if (!hasDemonHunterReqLevel)
-                        {
-                            SendCharCreate(ResponseCodes.CharCreateNewPlayer);
-                            return;
-                        }
-                        if (!hasEvokerReqLevel)
-                        {
-                            SendCharCreate(ResponseCodes.CharCreateDracthyrLevelRequirement);
-                            return;
-                        }
-                    }
-
-                    if (createInfo.ClassId == Class.Evoker && hasEvokerLimit && evokerLimit < 1)
-                    {
-                        SendCharCreate(ResponseCodes.CharCreateNewPlayer);
-                        return;
                     }
 
                     // Check name uniqueness in the same step as saving to database
                     if (Global.CharacterCacheStorage.GetCharacterCacheByName(createInfo.Name) != null)
                     {
-                        SendCharCreate(ResponseCodes.CharCreateDracthyrDuplicate);
+                        SendCharCreate(ResponseCodes.CharCreateNameInUse);
                         return;
                     }
 
@@ -647,7 +652,7 @@ namespace Game
                     });
                 }
 
-                if (!allowTwoSideAccounts || skipCinematics == 1 || createInfo.ClassId == Class.DemonHunter)
+                if (!allowTwoSideAccounts || skipCinematics == 1)
                 {
                     finalizeCharacterCreation(new SQLResult());
                     return;
@@ -655,7 +660,7 @@ namespace Game
 
                 stmt = CharacterDatabase.GetPreparedStatement(CharStatements.SEL_CHAR_CREATE_INFO);
                 stmt.SetInt32(0, GetAccountId());
-                stmt.SetInt32(1, (skipCinematics == 1 || createInfo.ClassId == Class.DemonHunter || createInfo.ClassId == Class.Evoker) ? 1200 : 1); // 200 (max chars per realm) + 1000 (max deleted chars per realm)
+                stmt.SetInt32(1, (skipCinematics == 1) ? 1200 : 1); // 200 (max chars per realm) + 1000 (max deleted chars per realm)
                 queryCallback.WithCallback(finalizeCharacterCreation).SetNextQuery(DB.Characters.AsyncQuery(stmt));
             }));
         }
@@ -1124,14 +1129,7 @@ namespace Game
             // Handle Login-Achievements (should be handled after loading)
             _player.UpdateCriteria(CriteriaType.Login, 1);
 
-            if (pCurrChar.GetClass() == Class.DeathKnight)
-            {
-                ResyncRunes data = new()
-                {
-                    Runes = pCurrChar.Runes.GetRuneData(LoopTime.ServerTime)
-                };
-                SendPacket(data);
-            }
+
 
             Global.ScriptMgr.OnPlayerLogin(pCurrChar, firstLogin);
         }
@@ -1964,39 +1962,25 @@ namespace Game
                         case Race.Dwarf:
                             stmt.SetInt32(1, 111);
                             break;
-                        case Race.Draenei:
-                        case Race.LightforgedDraenei:
-                            stmt.SetInt32(1, 759);
-                            break;
+
                         case Race.Gnome:
                             stmt.SetInt32(1, 313);
                             break;
                         case Race.NightElf:
                             stmt.SetInt32(1, 113);
                             break;
-                        case Race.Worgen:
-                            stmt.SetInt32(1, 791);
-                            break;
+
                         case Race.Undead:
                             stmt.SetInt32(1, 673);
                             break;
                         case Race.Tauren:
-                        case Race.HighmountainTauren:
                             stmt.SetInt32(1, 115);
                             break;
                         case Race.Troll:
                             stmt.SetInt32(1, 315);
                             break;
-                        case Race.BloodElf:
-                        case Race.VoidElf:
-                            stmt.SetInt32(1, 137);
-                            break;
-                        case Race.Goblin:
-                            stmt.SetInt32(1, 792);
-                            break;
-                        case Race.Nightborne:
-                            stmt.SetInt32(1, 2464);
-                            break;
+
+
                         default:
                             Log.outError(LogFilter.Player, $"Could not find language data for race ({factionChangeInfo.RaceID}).");
                             SendCharFactionChange(ResponseCodes.CharCreateError, factionChangeInfo);
@@ -2026,8 +2010,7 @@ namespace Game
                         {
                             // i = (315 - 1) / 8 = 39
                             // m = 1 << ((315 - 1) % 8) = 4
-                            int deathKnightExtraNode = playerClass != Class.DeathKnight || i != 39 ? 0 : 4;
-                            taximaskstream += (uint)(factionMask[i] | deathKnightExtraNode) + ' ';
+                            taximaskstream += (uint)(factionMask[i]) + ' ';
                         }
 
                         stmt = CharacterDatabase.GetPreparedStatement(CharStatements.UPD_CHAR_TAXIMASK);

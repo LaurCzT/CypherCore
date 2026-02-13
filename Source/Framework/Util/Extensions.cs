@@ -93,46 +93,6 @@ namespace System
                     return mask.HasFlag(RaceMask.Gnome);
                 case Race.Troll:
                     return mask.HasFlag(RaceMask.Troll);
-                case Race.BloodElf:
-                    return mask.HasFlag(RaceMask.BloodElf);
-                case Race.Draenei:
-                    return mask.HasFlag(RaceMask.Draenei);
-
-                case Race.Goblin:
-                    return mask.HasFlag(RaceMask.Goblin);
-                case Race.Worgen:
-                    return mask.HasFlag(RaceMask.Worgen);
-                case Race.PandarenNeutral:
-                    return mask.HasFlag(RaceMask.PandarenNeutral);
-                case Race.PandarenAlliance:
-                    return mask.HasFlag(RaceMask.PandarenAlliance);
-                case Race.PandarenHorde:
-                    return mask.HasFlag(RaceMask.PandarenHorde);
-                case Race.Nightborne:
-                    return mask.HasFlag(RaceMask.Nightborne);
-                case Race.HighmountainTauren:
-                    return mask.HasFlag(RaceMask.HighmountainTauren);
-                case Race.VoidElf:
-                    return mask.HasFlag(RaceMask.VoidElf);
-                case Race.LightforgedDraenei:
-                    return mask.HasFlag(RaceMask.LightforgedDraenei);
-                case Race.ZandalariTroll:
-                    return mask.HasFlag(RaceMask.ZandalariTroll);
-                case Race.KulTiran:
-                    return mask.HasFlag(RaceMask.KulTiran);
-
-                case Race.DarkIronDwarf:
-                    return mask.HasFlag(RaceMask.DarkIronDwarf);
-                case Race.Vulpera:
-                    return mask.HasFlag(RaceMask.Vulpera);
-                case Race.MagharOrc:
-                    return mask.HasFlag(RaceMask.MagharOrc);
-                case Race.MechaGnome:
-                    return mask.HasFlag(RaceMask.MechaGnome);
-                case Race.DracthyrHorde:
-                    return mask.HasFlag(RaceMask.DracthyrHorde);
-                case Race.DracthyrAlliance:
-                    return mask.HasFlag(RaceMask.DracthyrAlliance);
 
                 default: return false;
             }
@@ -154,16 +114,12 @@ namespace System
                     return GtClass.Rogue;
                 case Class.Priest:
                     return GtClass.Priest;
-                case Class.DeathKnight:
-                    return GtClass.DeathKnight;
                 case Class.Shaman:
                     return GtClass.Shaman;
                 case Class.Mage:
                     return GtClass.Mage;
                 case Class.Warlock:
                     return GtClass.Warlock;
-                case Class.Monk:
-                    return GtClass.Monk;
                 case Class.Druid:
                     return GtClass.Druid;
                 default:

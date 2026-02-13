@@ -7211,7 +7211,7 @@ namespace Game
                                         switch (itemTemplate.Effects[0].SpellCategoryID)
                                         {
                                             case SpellCategories.Food:                                // food
-                                                count = characterLoadout.ChrClassID == Class.DeathKnight ? 10 : 4;
+                                                count = 4;
                                                 break;
                                             case SpellCategories.Drink:                                // drink
                                                 count = 2;
@@ -7661,27 +7661,7 @@ namespace Game
 
                             Expansion configExpansion = (Expansion)WorldConfig.Values[WorldCfg.Expansion].Int32;
 
-                            // skip expansion races if not playing with expansion
-                            if (configExpansion < Expansion.BurningCrusade 
-                                && (raceID == Race.BloodElf || raceID == Race.Draenei))
-                                continue;
 
-                            // skip expansion classes if not playing with expansion
-                            if (configExpansion < Expansion.WrathOfTheLichKing 
-                                && classID == Class.DeathKnight)
-                                continue;
-
-                            if (configExpansion < Expansion.MistsOfPandaria 
-                                && (raceID == Race.PandarenNeutral || raceID == Race.PandarenHorde || raceID == Race.PandarenAlliance))
-                                continue;
-
-                            if (configExpansion < Expansion.Legion 
-                                && classID == Class.DemonHunter)
-                                continue;
-
-                            if (configExpansion < Expansion.Dragonflight 
-                                && classID == Class.Evoker)
-                                continue;
 
                             // fatal error if no level 1 data
                             if (playerInfo.levelInfo[0].stats[0] == 0)

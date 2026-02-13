@@ -2115,8 +2115,7 @@ namespace Game.Entities
                     ushort maxValue = GetMaxSkillValueForLevel();
                     if (rcInfo.HasFlag(SkillRaceClassInfoFlags.AlwaysMaxValue))
                         skillValue = maxValue;
-                    else if (GetClass() == Class.DeathKnight)
-                        skillValue = (ushort)Math.Min(Math.Max(1, (GetLevel() - 1) * 5), maxValue);
+
 
                     SetSkill(skillId, 0, skillValue, maxValue);
                     break;
@@ -2131,8 +2130,7 @@ namespace Game.Entities
                     ushort skillValue = 1;
                     if (rcInfo.HasFlag(SkillRaceClassInfoFlags.AlwaysMaxValue))
                         skillValue = maxValue;
-                    else if (GetClass() == Class.DeathKnight)
-                        skillValue = (ushort)Math.Min(Math.Max(1, (GetLevel() - 1) * 5), maxValue);
+
 
                     SetSkill(skillId, 1, skillValue, maxValue);
                     break;
@@ -2671,27 +2669,10 @@ namespace Game.Entities
 
         public void InitRunes()
         {
-            if (GetClass() != Class.DeathKnight)
-                return;
-
-            Runes = new Runes(this);
         }
 
         public void UpdateAllRunesRegen()
         {
-            if (GetClass() != Class.DeathKnight)
-                return;
-
-            /*        
-            uint runeIndex = GetPowerIndex(PowerType.Runes);
-            if (runeIndex == (int)PowerType.Max)
-                return;
-
-            PowerTypeRecord runeEntry = Global.DB2Mgr.GetPowerTypeEntry(PowerType.Runes);
-
-            uint cooldown = GetRuneBaseCooldown();
-            SetUpdateFieldValue(ref m_values.ModifyValue(m_unitData).ModifyValue(m_unitData.PowerRegenFlatModifier, (int)runeIndex), (float)(1 * Time.InMilliseconds) / cooldown - runeEntry.RegenPeace);
-            */
         }
 
         public bool CanNoReagentCast(SpellInfo spellInfo)

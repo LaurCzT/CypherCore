@@ -38,7 +38,7 @@ namespace Game.Entities
             UpdatePowerRegen(PowerType.Mana);
             UpdatePowerRegen(PowerType.Rage);
             UpdatePowerRegen(PowerType.Energy);
-            UpdatePowerRegen(PowerType.RunicPower);
+            UpdatePowerRegen(PowerType.Energy);
             UpdateExpertise(WeaponAttackType.BaseAttack);
             UpdateExpertise(WeaponAttackType.OffAttack);
             UpdateDamagePhysical(WeaponAttackType.BaseAttack);
@@ -511,8 +511,8 @@ namespace Game.Entities
                     if (powerInfo.RegenPeace > 0)
                         mod_regen *= multModifier;
 
-                    if (power != PowerType.RunicPower) // Butchery [48979]^1 requires combat
-                        mod_regen += flatModifier;
+                     // Butchery [48979]^1 requires combat - RunicPower check removed
+                    mod_regen += flatModifier;
 
                     // Unit fields contain an offset relative to the base power regeneration.
                     mod_regen -= powerInfo.RegenPeace;
@@ -598,7 +598,7 @@ namespace Game.Entities
 
             float classSpecificBonus = GetClass() switch
             {
-                Class.Warrior or Class.Paladin or Class.DeathKnight
+                Class.Warrior or Class.Paladin
                     => level * 3.0f - 20.0f,
 
                 Class.Rogue or Class.Hunter or Class.Shaman
@@ -697,8 +697,7 @@ namespace Game.Entities
             Pet pet = GetPet();
             Guardian guardian = GetGuardianPet();
 
-            if (pet != null && pet.IsPetGhoul()) // At melee attack power change for DK pet
-                pet.UpdateMeleeAttackPowerAndDamage();
+
 
             if (guardian != null && guardian.IsSpiritWolf()) // At melee attack power change for Shaman feral spirit
                 guardian.UpdateMeleeAttackPowerAndDamage();

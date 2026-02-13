@@ -1212,54 +1212,6 @@ namespace Game.Entities
             int overEnergize = 0;
             ServerTime currentTime = LoopTime.ServerTime;
 
-            if (Runes.RunesByPowerList.ContainsKey(powerType))
-            {
-                if (this is Player player)
-                {
-                    // Runes behave a bit differently than regular power.
-                    // While they do have a legit power type and value,
-                    // they never are set or changed so we have to use the runes api instead
-
-                    if (player.GetClass() == Class.DeathKnight)
-                    {
-                        RuneStateMask activatedRunes = RuneStateMask.None;
-                        int runesToEnergize = damage;
-                        foreach (var rune in Runes.RunesList.Values)
-                        {
-                            if (runesToEnergize <= 0)
-                                break;
-
-                            if (rune.Power == powerType
-                                && player.Runes.GetRuneCooldown(rune, currentTime) > RuneCooldowns.Zero)
-                            {
-                                player.Runes.SetRuneCooldown(rune, RuneCooldowns.Zero, currentTime);
-                                activatedRunes |= rune.Mask;
-                                --runesToEnergize;
-                            }
-                        }
-
-                        foreach (var rune in Runes.RunesByPowerList[powerType])
-                        {
-                            if (runesToEnergize <= 0)
-                                break;
-
-                            if (player.Runes.GetRuneType(rune) == RuneType.Death
-                                && player.Runes.GetRuneCooldown(rune, currentTime) > RuneCooldowns.Zero)
-                            {
-                                player.Runes.SetRuneCooldown(rune, RuneCooldowns.Zero, currentTime);
-                                activatedRunes |= rune.Mask;
-                                --runesToEnergize;
-                            }
-                        }
-
-                        player.Runes.SendActivateRunes(activatedRunes);
-
-                        gain = damage - runesToEnergize;
-                        overEnergize = runesToEnergize;
-                    }
-                }
-            }
-            else
             {
                 gain = victim.ModifyPower(powerType, damage, false);
                 overEnergize = damage - gain;

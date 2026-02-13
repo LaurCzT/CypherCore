@@ -1390,8 +1390,7 @@ namespace Game.Entities
                     {
                         case Class.Warlock:
                             return GetCreatureTemplate().CreatureType == CreatureType.Demon;
-                        case Class.DeathKnight:
-                            return GetCreatureTemplate().CreatureType == CreatureType.Undead;
+
                         case Class.Mage:
                             return GetCreatureTemplate().CreatureType == CreatureType.Elemental;
                         default:

@@ -1005,7 +1005,6 @@ namespace Scripts.Spells.Items
                 case Class.Priest:
                     possibleSpells.Add(SpellFlaskOfTheNorthSp);
                     break;
-                case Class.DeathKnight:
                 case Class.Warrior:
                     possibleSpells.Add(SpellFlaskOfTheNorthStr);
                     break;
@@ -3817,73 +3816,6 @@ namespace Scripts.Spells.Items
         {
             DoCheckEffectProc.Add(new(CheckProc, 0, AuraType.ProcTriggerSpell));
             OnEffectProc.Add(new(HandleProc, 0, AuraType.ProcTriggerSpell));
-        }
-    }
-
-    [Script] // 215266 - Fragile Echoes
-    class spell_item_amalgams_seventh_spine : AuraScript
-    {
-        const int SpellFragileEchoesMonk = 225281;
-        const int SpellFragileEchoesShaman = 225292;
-        const int SpellFragileEchoesPriestDiscipline = 225294;
-        const int SpellFragileEchoesPaladin = 225297;
-        const int SpellFragileEchoesDruid = 225298;
-        const int SpellFragileEchoesPriestHoly = 225366;
-
-        public override bool Validate(SpellInfo spellInfo)
-        {
-            return ValidateSpellInfo(SpellFragileEchoesMonk, SpellFragileEchoesShaman, SpellFragileEchoesPriestDiscipline, SpellFragileEchoesPaladin, SpellFragileEchoesDruid, SpellFragileEchoesPriestHoly);
-        }
-
-        void ForcePeriodic(AuraEffect aurEff, ref bool isPeriodic, ref int amplitude)
-        {
-            // simulate heartbeat timer
-            isPeriodic = true;
-            amplitude = 5000;
-        }
-
-        void UpdateSpecAura(AuraEffect aurEff)
-        {
-            PreventDefaultAction();
-            Player target = GetTarget().ToPlayer();
-            if (target == null)
-                return;
-
-            void updateAuraIfInCorrectSpec(ChrSpecialization spec, int aura)
-            {
-                if (target.GetPrimarySpecialization() != spec)
-                    target.RemoveAurasDueToSpell(aura);
-                else if (!target.HasAura(aura))
-                    target.CastSpell(target, aura, aurEff);
-            }
-
-            switch (target.GetClass())
-            {
-                case Class.Monk:
-                    updateAuraIfInCorrectSpec(ChrSpecialization.MonkMistweaver, SpellFragileEchoesMonk);
-                    break;
-                case Class.Shaman:
-                    updateAuraIfInCorrectSpec(ChrSpecialization.ShamanRestoration, SpellFragileEchoesShaman);
-                    break;
-                case Class.Priest:
-                    updateAuraIfInCorrectSpec(ChrSpecialization.PriestDiscipline, SpellFragileEchoesPriestDiscipline);
-                    updateAuraIfInCorrectSpec(ChrSpecialization.PriestHoly, SpellFragileEchoesPriestHoly);
-                    break;
-                case Class.Paladin:
-                    updateAuraIfInCorrectSpec(ChrSpecialization.PaladinHoly, SpellFragileEchoesPaladin);
-                    break;
-                case Class.Druid:
-                    updateAuraIfInCorrectSpec(ChrSpecialization.DruidRestoration, SpellFragileEchoesDruid);
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        public override void Register()
-        {
-            DoEffectCalcPeriodic.Add(new(ForcePeriodic, 0, AuraType.Dummy));
-            OnEffectPeriodic.Add(new(UpdateSpecAura, 0, AuraType.Dummy));
         }
     }
 

@@ -431,9 +431,7 @@ namespace Game.Entities
                     UpdateCriteria(CriteriaType.LoseDuel, 1);
                     opponent.UpdateCriteria(CriteriaType.WinDuel, 1);
 
-                    // Credit for quest Death's Challenge
-                    if (GetClass() == Class.DeathKnight && opponent.GetQuestStatus(12733) == QuestStatus.Incomplete)
-                        opponent.CastSpell(duel.Opponent, 52994, true);
+
 
                     // Honor points after duel (the winner) - ImpConfig
                     int amount = WorldConfig.Values[WorldCfg.HonorAfterDuel].Int32;

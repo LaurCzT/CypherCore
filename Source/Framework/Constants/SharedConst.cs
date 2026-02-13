@@ -664,9 +664,6 @@ namespace Framework.Constants
         Shaman = 7,
         Warlock = 8,
         Warrior = 9,
-        DeathKnight = 10,
-        Monk = 11,
-        DemonHunter = 12,
         Max,
     }
 
@@ -678,18 +675,11 @@ namespace Framework.Constants
         Hunter = 3,
         Rogue = 4,
         Priest = 5,
-        DeathKnight = 6,
         Shaman = 7,
         Mage = 8,
         Warlock = 9,
         Druid = 11,
         Max,
-
-        // Unused
-        Monk = 10,
-        DemonHunter = 12,
-        Evoker = 13,
-        Adventurer = 14,
     }
 
     [Flags]
@@ -701,20 +691,15 @@ namespace Framework.Constants
         Hunter = 1 << (Class.Hunter - 1),
         Rogue = 1 << (Class.Rogue - 1),
         Priest = 1 << (Class.Priest - 1),
-        DeathKnight = 1 << (Class.DeathKnight - 1),
         Shaman = 1 << (Class.Shaman - 1),
         Mage = 1 << (Class.Mage - 1),
         Warlock = 1 << (Class.Warlock - 1),
-        Monk = 1 << (Class.Monk - 1),
         Druid = 1 << (Class.Druid - 1),
-        DemonHunter = 1 << (Class.DemonHunter - 1),
-        Evoker = 1 << (Class.Evoker - 1),
-        Adventurer = 1 << (Class.Adventurer - 1),
 
         //Helpers
         Creatures = Warrior | Paladin | Rogue | Mage,
         WandUsers = Priest | Mage | Warlock,
-        Playable = Warrior | Paladin | Hunter | Rogue | Priest | DeathKnight | Shaman |
+        Playable = Warrior | Paladin | Hunter | Rogue | Priest | Shaman |
             Mage | Warlock | Druid,
 
         AllPermanent = -1,
@@ -728,11 +713,9 @@ namespace Framework.Constants
         Hunter = Class.Hunter,
         Rogue = Class.Rogue,
         Priest = Class.Priest,
-        DeathKnight = Class.DeathKnight,
         Shaman = Class.Shaman,
         Mage = Class.Mage,
         Warlock = Class.Warlock,
-        Monk = Class.Monk,
         Druid = Class.Druid,
         Item1 = -1,
         Consumable = -2,
@@ -756,45 +739,7 @@ namespace Framework.Constants
         Tauren = 6,
         Gnome = 7,
         Troll = 8,
-        Goblin = 9,
-        BloodElf = 10,
-        Draenei = 11,
-        //FelOrc = 12,
-        //Naga = 13,
-        //Broken = 14,
-        //Skeleton = 15,
-        //Vrykul = 16,
-        //Tuskarr = 17,
-        //ForestTroll = 18,
-        //Taunka = 19,
-        //NorthrendSkeleton = 20,
-        //IceTroll = 21,
-        Worgen = 22,
-        //HumanGilneas = 23,
-        PandarenNeutral = 24,
-        PandarenAlliance = 25,
-        PandarenHorde = 26,
-        Nightborne = 27,
-        HighmountainTauren = 28,
-        VoidElf = 29,
-        LightforgedDraenei = 30,
-        ZandalariTroll = 31,
-        KulTiran = 32,
-        //RACE_THIN_HUMAN         = 33,
-        DarkIronDwarf = 34,
-        Vulpera = 35,
-        MagharOrc = 36,
-        MechaGnome = 37,
-        DracthyrAlliance = 52,
-        DracthyrHorde = 70,
-        //CompanionDrake      = 71,
-        //CompanionProtoDragon = 72,
-        //CompanionSerpent    = 73,
-        //CompanionWyvern     = 74,
-        //DracthyrVisageAlliance = 75,
-        //DracthyrVisageHorde= 76,
-        //CompanionPterrodax  = 77
-        Max = 78
+        Max = 9
     }
 
     [Flags]
@@ -810,32 +755,11 @@ namespace Framework.Constants
         Tauren = 1 << (Race.Tauren - 1),
         Gnome = 1 << (Race.Gnome - 1),
         Troll = 1 << (Race.Troll - 1),
-        BloodElf = 1 << (Race.BloodElf - 1),
-        Draenei = 1 << (Race.Draenei - 1),
-
-        Goblin = 1 << (Race.Goblin - 1),
-        Worgen = 1 << (Race.Worgen - 1),
-        PandarenNeutral = 1 << (Race.PandarenNeutral - 1),
-        PandarenAlliance = 1 << (Race.PandarenAlliance - 1),
-        PandarenHorde = 1 << (Race.PandarenHorde - 1),
-        Nightborne = 1 << (Race.Nightborne - 1),
-        HighmountainTauren = 1 << (Race.HighmountainTauren - 1),
-        VoidElf = 1 << (Race.VoidElf - 1),
-        LightforgedDraenei = 1 << (Race.LightforgedDraenei - 1),
-        ZandalariTroll = 1 << (Race.ZandalariTroll - 1),
-        KulTiran = 1 << (Race.KulTiran - 1),
-
-        DarkIronDwarf = 1 << 11,
-        Vulpera = 1 << 12,
-        MagharOrc = 1 << 13,
-        MechaGnome = 1 << 14,
-        DracthyrHorde = 1 << 15,
-        DracthyrAlliance = 1 << 16,
 
         //Helpers
-        Alliance = Human | Dwarf | NightElf | Gnome | Draenei,
+        Alliance = Human | Dwarf | NightElf | Gnome,
 
-        Horde = Orc | Undead | Tauren | Troll | BloodElf,
+        Horde = Orc | Undead | Tauren | Troll,
 
         Playable = Alliance | Horde,
 

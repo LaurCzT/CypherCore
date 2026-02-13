@@ -1,9 +1,57 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   
   <Import Project="..\..\default.props" />
   
   <ItemGroup>
     <ProjectReference Include="..\Game\Game.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Folder Include="Battlegrounds\WarsongGulch\" />
+    <Folder Include="EasternKingdoms\Badlands\Uldaman\" />
+    <Folder Include="EasternKingdoms\BurningSteppes\" />
+    <Folder Include="EasternKingdoms\EasternPlaguelands\Naxxramas\" />
+    <Folder Include="EasternKingdoms\EasternPlaguelands\Stratholme\" />
+    <Folder Include="EasternKingdoms\ElwynnForest\TheStockade\" />
+    <Folder Include="EasternKingdoms\HillsbradFoothills\" />
+    <Folder Include="EasternKingdoms\AlteracMountains\" />
+    <Folder Include="EasternKingdoms\ArathiHighlands\" />
+    <Folder Include="EasternKingdoms\LochModan\" />
+    <Folder Include="EasternKingdoms\Duskwood\" />
+    <Folder Include="EasternKingdoms\DeadwindPass\" />
+    <Folder Include="EasternKingdoms\BlastedLands\" />
+    <Folder Include="EasternKingdoms\SearingGorge\" />
+    <Folder Include="EasternKingdoms\SilverpineForest\ShadowfangKeep\" />
+    <Folder Include="EasternKingdoms\RedridgeMountains\" />
+    <Folder Include="EasternKingdoms\StranglethornVale\ZulGurub\" />
+    <Folder Include="EasternKingdoms\SwampofSorrows\TempleofAtalHakkar\" />
+    <Folder Include="EasternKingdoms\TirisfalGlades\ScarletMonastery\" />
+    <Folder Include="EasternKingdoms\WesternPlaguelands\Scholomance\" />
+    <Folder Include="EasternKingdoms\Wetlands\" />
+    <Folder Include="EasternKingdoms\TheHinterlands\" />
+    <Folder Include="Kalimdor\Ashenvale\BlackfathomDeeps\" />
+    <Folder Include="Kalimdor\Desolace\Maraudon\" />
+    <Folder Include="Kalimdor\Durotar\RagefireChasm\" />
+    <Folder Include="Kalimdor\Feralas\DireMaul\East\" />
+    <Folder Include="Kalimdor\Feralas\DireMaul\North\" />
+    <Folder Include="Kalimdor\Feralas\DireMaul\West\" />
+    <Folder Include="Kalimdor\Mulgore\" />
+    <Folder Include="Kalimdor\Darkshore\" />
+    <Folder Include="Kalimdor\DustwallowMarsh\" />
+    <Folder Include="Kalimdor\Azshara\" />
+    <Folder Include="Kalimdor\Felwood\" />
+    <Folder Include="Kalimdor\Moonglade\" />
+    <Folder Include="Kalimdor\Silithus\TempleofAhnQiraj\" />
+    <Folder Include="Kalimdor\Silithus\RuinsofAhnQiraj\" />
+    <Folder Include="Kalimdor\Tanaris\ZulFarrak\" />
+    <Folder Include="Kalimdor\TheBarrens\RazorfenDowns\" />
+    <Folder Include="Kalimdor\TheBarrens\RazorfenKraul\" />
+    <Folder Include="Kalimdor\TheBarrens\WailingCaverns\" />
+    <Folder Include="Kalimdor\Winterspring\" />
+    <Folder Include="Kalimdor\UnGoroCrater\" />
+    <Folder Include="Kalimdor\ThousandNeedles\" />
+    <Folder Include="Kalimdor\StonetalonMountains\" />
+    <Folder Include="Kalimdor\Teldrassil\" />
   </ItemGroup>
   
 </Project>

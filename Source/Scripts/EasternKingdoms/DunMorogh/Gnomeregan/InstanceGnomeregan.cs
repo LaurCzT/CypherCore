@@ -1,12 +1,9 @@
-// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
-// Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
-
-using Framework.Constants;
+﻿using Framework.Constants;
 using Game.Entities;
 using Game.Maps;
 using Game.Scripting;
 
-namespace Scripts.EasternKingdoms.Gnomeregan
+namespace Scripts.EasternKingdoms.DunMorogh.Gnomeregan
 {
     struct GNOGameObjectIds
     {
@@ -130,4 +127,3 @@ namespace Scripts.EasternKingdoms.Gnomeregan
         }
     }
 }
-

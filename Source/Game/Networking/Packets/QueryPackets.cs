@@ -136,6 +136,36 @@ namespace Game.Networking.Packets
         
         public List<NameCacheLookupResult> Players = new();
     }
+
+    public class QueryPlayerName : ClientPacket
+    {
+        public QueryPlayerName(WorldPacket packet) : base(packet) { }
+
+        public override void Read()
+        {
+            Player = _worldPacket.ReadPackedGuid();
+        }
+
+        public ObjectGuid Player;
+    }
+
+    public class QueryPlayerNameResponse : ServerPacket
+    {
+        public QueryPlayerNameResponse() : base(ServerOpcodes.QueryPlayerNameResponse) { }
+
+        public override void Write()
+        {
+            _worldPacket.WriteUInt8(Result);
+            _worldPacket.WritePackedGuid(Player);
+
+            if (Result == 0 && Data != null)
+                Data.Write(_worldPacket);
+        }
+
+        public ObjectGuid Player;
+        public byte Result;
+        public PlayerGuidLookupData Data;
+    }
     
     public class QueryPageText : ClientPacket
     {

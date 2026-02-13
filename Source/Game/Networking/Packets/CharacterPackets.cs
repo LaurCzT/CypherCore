@@ -58,7 +58,7 @@ namespace Game.Networking.Packets
         public bool IsNewPlayer; // forbids hero classes and allied races
         public bool IsTrialAccountRestricted;
 
-        public int MaxCharacterLevel = 1;
+        public int MaxCharacterLevel = 60;
         public int? DisabledClassesMask = new();
 
         public List<CharacterInfo> Characters = new(); // all characters on the list
@@ -116,7 +116,7 @@ namespace Game.Networking.Packets
                 FirstLogin = atLoginFlags.HasAnyFlag(AtLoginFlags.FirstLogin);
 
                 // show pet at selection character in character list only for non-ghost character
-                if (!playerFlags.HasAnyFlag(PlayerFlags.Ghost) && (ClassId == Class.Warlock || ClassId == Class.Hunter || ClassId == Class.DeathKnight))
+                if (!playerFlags.HasAnyFlag(PlayerFlags.Ghost) && (ClassId == Class.Warlock || ClassId == Class.Hunter))
                 {
                     CreatureTemplate creatureInfo = Global.ObjectMgr.GetCreatureTemplate(fields.Read<int>(14));
                     if (creatureInfo != null)

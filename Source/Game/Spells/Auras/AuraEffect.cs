@@ -1474,9 +1474,7 @@ namespace Game.Spells
                                 switch (target.GetRace())
                                 {
                                     // Blood Elf
-                                    case Race.BloodElf:
-                                        target.SetDisplayId(isFemale ? 17830 : 17829);
-                                        break;
+
                                     // Orc
                                     case Race.Orc:
                                         target.SetDisplayId(isFemale ? 10140 : 10139);
@@ -1494,9 +1492,7 @@ namespace Game.Spells
                                         target.SetDisplayId(isFemale ? 10145 : 10146);
                                         break;
                                     // Draenei
-                                    case Race.Draenei:
-                                        target.SetDisplayId(isFemale ? 17828 : 17827);
-                                        break;
+
                                     // Dwarf
                                     case Race.Dwarf:
                                         target.SetDisplayId(isFemale ? 10142 : 10141);
@@ -1533,9 +1529,7 @@ namespace Game.Spells
                                 switch (target.GetRace())
                                 {
                                     // Blood Elf
-                                    case Race.BloodElf:
-                                        target.SetDisplayId(isFemale ? 25043 : 25032);
-                                        break;
+
                                     // Orc
                                     case Race.Orc:
                                         target.SetDisplayId(isFemale ? 25050 : 25039);
@@ -1553,9 +1547,7 @@ namespace Game.Spells
                                         target.SetDisplayId(isFemale ? 25053 : 25042);
                                         break;
                                     // Draenei
-                                    case Race.Draenei:
-                                        target.SetDisplayId(isFemale ? 25044 : 25033);
-                                        break;
+
                                     // Dwarf
                                     case Race.Dwarf:
                                         target.SetDisplayId(isFemale ? 25045 : 25034);
@@ -6037,38 +6029,6 @@ namespace Game.Spells
         [AuraEffectHandler(AuraType.ConvertRune)]
         void HandleConvertRune(AuraApplication aurApp, AuraEffectHandleModes mode, bool apply)
         {
-            if (!mode.HasAnyFlag(AuraEffectHandleModes.Real))
-                return;
-
-            if (aurApp.GetTarget() is not Player player || player.GetClass() != Class.DeathKnight)
-                return;
-
-            int runesToConvert = GetAmount();
-            RuneType runeTypeToConvert = (RuneType)GetMiscValue();
-            RuneType runeTypeToConvertInto = (RuneType)GetMiscValueB();
-
-            if (runeTypeToConvertInto != RuneType.Death) // wotlk classic uses this type only
-                return;
-
-            if (apply)
-            {
-                foreach (var rune in Runes.RunesList.Values)
-                {
-                    if (runesToConvert <= 0)
-                        break;
-
-                    if (runeTypeToConvert != player.Runes.GetRuneType(rune))
-                        continue;
-
-                    if (player.Runes.GetRuneCooldown(rune, LoopTime.ServerTime) == RuneCooldowns.Zero)
-                    {
-                        player.Runes.ApplyConvertRuneAura(rune, this);
-                        --runesToConvert;
-                    }
-                }
-            }
-            else
-                player.Runes.RemoveConvertRuneAura(this);
         }
     }
     #endregion

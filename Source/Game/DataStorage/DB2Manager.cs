@@ -1580,12 +1580,7 @@ namespace Game.DataStorage
                 numTalentsAtLevel = NumTalentsAtLevelStorage.LastOrDefault().Value;
             if (numTalentsAtLevel != null)
             {
-                return playerClass switch
-                {
-                    Class.DeathKnight => numTalentsAtLevel.NumTalentsDeathKnight,
-                    Class.DemonHunter => numTalentsAtLevel.NumTalentsDemonHunter,
-                    _ => numTalentsAtLevel.NumTalents,
-                };
+                return numTalentsAtLevel.NumTalents;
             }
             return 0;
         }

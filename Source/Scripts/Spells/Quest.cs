@@ -1709,12 +1709,10 @@ namespace Scripts.Spells.Azerite
                 Race.Tauren => TributeSpellIds.GromsTaurenTribute,
                 Race.Undead => TributeSpellIds.GromsUndeadTribute,
                 Race.Orc => TributeSpellIds.GromsOrcTribute,
-                Race.BloodElf => TributeSpellIds.GromsBloodelfTribute,
                 Race.Human => TributeSpellIds.UthersHumanTribute,
                 Race.Gnome => TributeSpellIds.UthersGnomeTribute,
                 Race.Dwarf => TributeSpellIds.UthersDwarfTribute,
                 Race.NightElf => TributeSpellIds.UthersNightelfTribute,
-                Race.Draenei => TributeSpellIds.UthersDraeneiTribute,
                 _ => 0,
             };
 

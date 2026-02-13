@@ -4725,40 +4725,6 @@ namespace Game.Spells
         [SpellEffectHandler(SpellEffectName.ActivateRune)]
         void EffectActivateRune()
         {
-            if (effectHandleMode != SpellEffectHandleMode.Launch)
-                return;
-
-            if (m_caster is not Player player)
-                return;
-
-            if (player.GetClass() != Class.DeathKnight)
-                return;
-
-            // needed later
-            m_runesState = player.Runes.AvailableRunes;
-
-            int count = damage;
-            if (count == 0)
-                count = 1;
-
-            RuneStateMask activatedRunes = RuneStateMask.None;
-            ServerTime currentTime = LoopTime.ServerTime;
-
-            foreach (var rune in Runes.RunesList.Values)
-            {
-                if (count <= 0)
-                    break;
-
-                if (player.Runes.GetRuneType(rune) == (RuneType)effectInfo.MiscValue
-                    && player.Runes.GetRuneCooldown(rune, currentTime) > RuneCooldowns.Zero)
-                {
-                    player.Runes.SetRuneCooldown(rune, RuneCooldowns.Zero, currentTime);
-                    activatedRunes |= rune.Mask;
-                    --count;
-                }
-            }
-
-            player.Runes.SendActivateRunes(activatedRunes);
         }
 
         [SpellEffectHandler(SpellEffectName.CreateTamedPet)]

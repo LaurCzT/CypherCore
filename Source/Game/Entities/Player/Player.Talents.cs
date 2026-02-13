@@ -677,10 +677,6 @@ namespace Game.Entities
             {
                 switch (GetClass())
                 {
-                    case Class.DeathKnight:
-                        return numTalentsAtLevel.NumTalentsDeathKnight;
-                    case Class.DemonHunter:
-                        return numTalentsAtLevel.NumTalentsDemonHunter;
                     default:
                         return numTalentsAtLevel.NumTalents;
                 }

@@ -2036,11 +2036,7 @@ namespace Game.Entities
             }
             else
             {
-                if (GetClass() == Class.DeathKnight && GetMapId() == 609 && !IsGameMaster() && !HasSpell(50977))
-                {
-                    SendTransferAborted(mapid, TransferAbortReason.UniqueMessage, 1);
-                    return false;
-                }
+
 
                 // far teleport to another map
                 Map oldmap = IsInWorld ? GetMap() : null;
@@ -2189,17 +2185,7 @@ namespace Game.Entities
             if (CliDB.ChrRacesStorage.LookupByKey((int)race).HasFlag(ChrRacesFlag.IsAlliedRace))
                 startLevel = WorldConfig.Values[WorldCfg.StartAlliedRaceLevel].Int32;
 
-            if (playerClass == Class.DeathKnight)
-            {
-                if (race == Race.PandarenAlliance || race == Race.PandarenHorde)
-                    startLevel = Math.Max(WorldConfig.Values[WorldCfg.StartAlliedRaceLevel].Int32, startLevel);
-                else
-                startLevel = Math.Max(WorldConfig.Values[WorldCfg.StartDeathKnightPlayerLevel].Int32, startLevel);
-            }
-            else if (playerClass == Class.DemonHunter)
-                startLevel = Math.Max(WorldConfig.Values[WorldCfg.StartDemonHunterPlayerLevel].Int32, startLevel);
-            else if (playerClass == Class.Evoker)
-                startLevel = Math.Max(WorldConfig.Values[WorldCfg.StartEvokerPlayerLevel].Int32, startLevel);
+
 
             if (characterTemplateId.HasValue)
             {
@@ -7025,7 +7011,7 @@ namespace Game.Entities
             if (node.HasFlag(TaxiNodeFlags.UsePlayerFavoriteMount) && preferredMountDisplay != 0)
                 mount_display_id = preferredMountDisplay;
             else
-                mount_display_id = ObjectMgr.GetTaxiMountDisplayId(sourcenode, GetTeam(), npc == null || (sourcenode == 315 && GetClass() == Class.DeathKnight));
+                mount_display_id = ObjectMgr.GetTaxiMountDisplayId(sourcenode, GetTeam(), npc == null);
 
             // in spell case allow 0 model
             if ((mount_display_id == 0 && spellid == 0) || sourcepath == 0)

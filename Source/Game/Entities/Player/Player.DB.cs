@@ -619,8 +619,7 @@ namespace Game.Entities
             if (!ok)
             {
                 WorldSafeLocsEntry loc = Global.ObjectMgr.GetDefaultGraveyard(GetTeam());
-                if (loc == null && GetRace() == Race.PandarenNeutral)
-                    loc = Global.ObjectMgr.GetWorldSafeLoc(3295); // The Wandering Isle, Starting Area GY
+
 
                 Cypher.Assert(loc != null, 
                     $"Missing fallback graveyard location for faction {GetBatttleGroundTeamId()}");
@@ -4103,12 +4102,7 @@ namespace Game.Entities
                 // Define the required variables
                 int charDeleteMinLvl;
 
-                if (characterInfo.ClassId == Class.DeathKnight)
-                    charDeleteMinLvl = WorldConfig.Values[WorldCfg.ChardeleteDeathKnightMinLevel].Int32;
-                else if (characterInfo.ClassId == Class.DemonHunter)
-                    charDeleteMinLvl = WorldConfig.Values[WorldCfg.ChardeleteDemonHunterMinLevel].Int32;
-                else
-                    charDeleteMinLvl = WorldConfig.Values[WorldCfg.ChardeleteMinLevel].Int32;
+                charDeleteMinLvl = WorldConfig.Values[WorldCfg.ChardeleteMinLevel].Int32;
 
                 // if we want to finalize the character removal or the character
                 // does not meet the level requirement of either heroic or non-heroic settings,

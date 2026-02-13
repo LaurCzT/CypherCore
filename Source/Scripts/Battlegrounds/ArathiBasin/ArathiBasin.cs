@@ -1,4 +1,4 @@
-// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -8,7 +8,7 @@ using Game.Scripting;
 using Game.Spells;
 using System;
 
-namespace Scripts.EasternKingdoms.ArathiBasin
+namespace Scripts.Battlegrounds.ArathiBasin
 {
     // 150513 - Arathor Gryphon Rider
     [Script]
@@ -16,7 +16,7 @@ namespace Scripts.EasternKingdoms.ArathiBasin
     {
         private const int scriptedPath = 800000059;
 
-        public npc_bg_ab_arathor_gryphon_rider_leader(Creature creature) : base(creature) {}
+        public npc_bg_ab_arathor_gryphon_rider_leader(Creature creature) : base(creature) { }
 
         public override void WaypointPathEnded(int nodeId, int pathId)
         {
@@ -38,7 +38,7 @@ namespace Scripts.EasternKingdoms.ArathiBasin
     {
         private const int scriptedPath = 800000058;
 
-        public npc_bg_ab_defiler_bat_rider_leader(Creature creature) : base(creature) { }    
+        public npc_bg_ab_defiler_bat_rider_leader(Creature creature) : base(creature) { }
 
         public override void WaypointPathEnded(int nodeId, int pathId)
         {

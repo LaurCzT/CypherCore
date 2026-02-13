@@ -4189,13 +4189,7 @@ namespace Game.Spells
                 castFlags |= SpellCastFlags.PowerLeftSelf;
             }
 
-            if (m_caster.IsTypeId(TypeId.Player) && m_caster.ToPlayer().GetClass() == Class.DeathKnight
-                && (HasPowerTypeCost(PowerType.RuneBlood) || HasPowerTypeCost(PowerType.RuneUnholy) || HasPowerTypeCost(PowerType.RuneFrost))
-                && !_triggeredCastFlags.HasAnyFlag(TriggerCastFlags.IgnorePowerAndReagentCost))
-            {
-                castFlags |= SpellCastFlags.NoGCD;                   // same as in SMSG_SPELL_START
-                castFlags |= SpellCastFlags.RuneList;                    // rune cooldowns list
-            }
+
 
             if (m_spellInfo.HasEffect(SpellEffectName.ActivateRune))
                 castFlags |= SpellCastFlags.RuneList;
@@ -4899,32 +4893,12 @@ namespace Game.Spells
 
         SpellCastResult CheckRuneCost()
         {
-            if (m_caster is not Player player)
-                return SpellCastResult.SpellCastOk;
-
-            if (player.GetClass() != Class.DeathKnight)
-                return SpellCastResult.SpellCastOk;
-
-            return player.Runes.GetRunesForSpellCast(m_powerCost, out _);
+            return SpellCastResult.SpellCastOk;
         }
 
         RuneStateMask TakeRunePower(bool didHit)
         {
-            RuneStateMask usedRunes = RuneStateMask.None;
-            if (m_caster is not Player player)
-                return usedRunes;
-
-            if (player.GetClass() != Class.DeathKnight)
-                return usedRunes;
-
-            m_runesState = player.Runes.AvailableRunes; // store previous state
-
-            if (player.Runes.GetRunesForSpellCast(m_powerCost, out usedRunes) == SpellCastResult.SpellCastOk)
-            {
-                player.Runes.SetRuneCooldown(usedRunes, didHit ? RuneCooldowns.Base : RuneCooldowns.Miss, LoopTime.ServerTime);
-            }
-
-            return usedRunes;
+            return RuneStateMask.None;
         }
 
         void TakeReagents()
