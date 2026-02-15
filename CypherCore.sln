@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.8.34309.116
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11505.172 d18.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BNetServer", "Source\BNetServer\BNetServer.csproj", "{EEBFCEE3-CFAC-4D2E-927F-8E24E07A4218}"
 EndProject
@@ -18,6 +18,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libs", "Libs", "{0C88588D-45B8-4AA9-8EEA-DB1A1BD19D19}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomCollections", "Source\CustomCollections\CustomCollections.csproj", "{C10BF008-DD5D-4687-FAFC-F95CCD6F614C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{CDA885DA-2926-4A36-9B48-930F0C952FE8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthSeedExtractor", "AuthSeedExtractor\AuthSeedExtractor.csproj", "{8D0EB857-193C-4BB2-BD35-6D1AA228C363}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,6 +53,10 @@ Global
 		{C10BF008-DD5D-4687-FAFC-F95CCD6F614C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C10BF008-DD5D-4687-FAFC-F95CCD6F614C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C10BF008-DD5D-4687-FAFC-F95CCD6F614C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D0EB857-193C-4BB2-BD35-6D1AA228C363}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D0EB857-193C-4BB2-BD35-6D1AA228C363}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D0EB857-193C-4BB2-BD35-6D1AA228C363}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D0EB857-193C-4BB2-BD35-6D1AA228C363}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -60,6 +68,7 @@ Global
 		{1899C17C-1FA4-4807-B90E-0336C5748C1A} = {0C88588D-45B8-4AA9-8EEA-DB1A1BD19D19}
 		{2F7515AD-18E3-4ACA-A14B-1929F76299E7} = {0C88588D-45B8-4AA9-8EEA-DB1A1BD19D19}
 		{C10BF008-DD5D-4687-FAFC-F95CCD6F614C} = {0C88588D-45B8-4AA9-8EEA-DB1A1BD19D19}
+		{8D0EB857-193C-4BB2-BD35-6D1AA228C363} = {CDA885DA-2926-4A36-9B48-930F0C952FE8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {836F0B44-1360-4E79-8ED9-F3D23C2ACEF5}

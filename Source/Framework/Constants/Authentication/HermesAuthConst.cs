@@ -1,7 +1,7 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
-// Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
+﻿
 
-namespace Framework.Constants
+
+namespace Framework.Constants.Authentication.Hermes
 {
     public enum ResponseCodes : byte
     {
@@ -111,40 +111,5 @@ namespace Framework.Constants
         CharNameRussianSilentCharacterAtBeginningOrEnd = 94,
         CharNameDeclensionDoesntMatchBaseName = 95,
         CharNameSpacesDisallowed = 96,
-
-        //unsed
-        //CharCreateCharacterArenaTeam = 0,
-        //CharCreateNameReservationFull = 0,
-        //CharCreateDracthyrDuplicate = 0,
-        //CharCreateDracthyrLevelRequirement = 0,
-        //CharCreateDeathknightDuplicate = 0,
-        //CharCreateDeathknightLevelRequirement = 0,
-        //CharCreateClassTrialNewcomer = 0,
-        //CharCreateClassTrialThrottleHour = 0,
-        //CharCreateClassTrialThrottleDay = 0,
-        //CharCreateClassTrialThrottleWeek = 0,
-        //CharCreateClassTrialThrottleAccount = 0,
-    }
-
-    public enum CharacterUndeleteResult
-    {
-        Ok = 0,
-        Cooldown = 1,
-        CharCreate = 2,
-        Disabled = 3,
-        NameTakenByThisAccount = 4,
-        Unknown = 5
-    }
-
-    public enum SrpVersion
-    {
-        v1 = 1,
-        v2 = 2
-    }
-
-    public enum SrpHashFunction
-    {
-        Sha256 = 0,
-        Sha512 = 1
     }
 }

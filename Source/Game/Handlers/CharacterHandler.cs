@@ -577,7 +577,7 @@ namespace Game
                         }
                     }
 
-                    if (checkClassLevelReqs)
+                    /*if (checkClassLevelReqs)
                     {
                         if (!hasDemonHunterReqLevel)
                         {
@@ -589,7 +589,7 @@ namespace Game
                             SendCharCreate(ResponseCodes.CharCreateDracthyrLevelRequirement);
                             return;
                         }
-                    }
+                    }*/
 
                     if (createInfo.ClassId == Class.Evoker && hasEvokerLimit && evokerLimit < 1)
                     {
@@ -598,11 +598,11 @@ namespace Game
                     }
 
                     // Check name uniqueness in the same step as saving to database
-                    if (Global.CharacterCacheStorage.GetCharacterCacheByName(createInfo.Name) != null)
+                    /*if (Global.CharacterCacheStorage.GetCharacterCacheByName(createInfo.Name) != null)
                     {
                         SendCharCreate(ResponseCodes.CharCreateDracthyrDuplicate);
                         return;
-                    }
+                    }*/
 
                     Player newChar = new(this);
                     newChar.GetMotionMaster().Initialize();

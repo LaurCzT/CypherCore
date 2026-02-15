@@ -1,0 +1,3 @@
+DELETE FROM realmlist;
+INSERT INTO `realmlist` (`id`, `name`, `address`, `localAddress`, `localSubnetMask`, `port`, `icon`, `flag`, `timezone`, `allowedSecurityLevel`, `population`, `gamebuild`, `Region`, `Battlegroup`) VALUES (1, 'CypherCore Classic', '127.0.0.1', '127.0.0.1', '255.255.255.0', 8085, 0, 0, 1, 0, 0, 40618, 1, 1);
+INSERT INTO `cypher114_logon`.`build_info` (`build`, `majorVersion`, `minorVersion`, `bugfixVersion`, `hotfixVersion`, `winAuthSeed`, `win64AuthSeed`, `mac64AuthSeed`, `winChecksumSeed`, `macChecksumSeed`) VALUES (40618, 1, 14, 0, NULL, NULL, '1278EB34F243ED7898D614C0E278EAC0', '1278EB34F243ED7898D614C0E278EAC0', NULL, NULL);
