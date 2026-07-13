@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -83,7 +83,6 @@ namespace Game.Entities
                 map.TrySetOwningGroup(group);
 
             map.CreateInstanceData();
-            map.SetInstanceScenario(Global.ScenarioMgr.CreateInstanceScenario(map, team));
             map.InitSpawnGroupState();
 
             if (WorldConfig.Values[WorldCfg.InstancemapLoadGrids].Bool)

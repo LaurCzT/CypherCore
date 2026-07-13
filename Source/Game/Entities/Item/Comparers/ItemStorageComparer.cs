@@ -1,4 +1,4 @@
-ï»¿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using System;
@@ -23,10 +23,10 @@ namespace Game.Entities
         //     A signed integer that indicates the relative values of x and y, as shown in the
         //     following table.
         //
-        //     Value â€“ Meaning
-        //     Less than zero â€“x is less than y.
-        //     Zero â€“x equals y.
-        //     Greater than zero â€“x is greater than y.
+        //     Value – Meaning
+        //     Less than zero –x is less than y.
+        //     Zero –x equals y.
+        //     Greater than zero –x is greater than y.
         private enum CompareResult
         {
             Equal = 0,

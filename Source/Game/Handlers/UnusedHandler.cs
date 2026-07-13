@@ -1,4 +1,4 @@
-﻿using Game.Networking.Packets;
+using Game.Networking.Packets;
 
 namespace Game
 {

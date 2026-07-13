@@ -1,10 +1,9 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
 using Framework.Database;
 using Game.DataStorage;
-using Game.DungeonFinding;
 using Game.Entities;
 using Game.Groups;
 using Game.Maps;
@@ -210,8 +209,7 @@ namespace Game.Chat
                 }
 
                 // Now we can print those informations for every single member of each group!
-                handler.SendSysMessage(CypherStrings.GroupPlayerNameGuid, slot.name, onlineState,
-                    zoneName, phases, slot.guid.ToString(), flags, LFGQueue.GetRolesString(slot.roles));
+                handler.SendSysMessage(CypherStrings.GroupPlayerNameGuid, slot.name, onlineState);
             }
 
             // And finish after every iterator is done.

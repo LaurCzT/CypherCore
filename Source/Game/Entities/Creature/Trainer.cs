@@ -1,5 +1,4 @@
-﻿using Framework.Constants;
-using Game.BattlePets;
+using Framework.Constants;
 using Game.Networking.Packets;
 using Game.Spells;
 using System;
@@ -75,17 +74,6 @@ namespace Game.Entities
             }
 
             bool sendSpellVisual = true;
-            var speciesEntry = BattlePetMgr.GetBattlePetSpeciesBySpell(trainerSpell.SpellId);
-            if (speciesEntry != null)
-            {
-                if (player.GetSession().GetBattlePetMgr().HasMaxPetCount(speciesEntry, player.GetGUID()))
-                {
-                    // Don't send any error to client (intended)
-                    return;
-                }
-
-                sendSpellVisual = false;
-            }
 
             float reputationDiscount = player.GetReputationPriceDiscount(npc);
             long moneyCost = (long)(trainerSpell.MoneyCost * reputationDiscount);
@@ -109,14 +97,6 @@ namespace Game.Entities
             else
             {
                 bool dependent = false;
-
-                if (speciesEntry != null)
-                {
-                    player.GetSession().GetBattlePetMgr().AddPet(speciesEntry.Id, BattlePetMgr.SelectPetDisplay(speciesEntry), BattlePetMgr.RollPetBreed(speciesEntry.Id), BattlePetMgr.GetDefaultPetQuality(speciesEntry.Id));
-                    // If the spell summons a battle pet, we fake that it has been learned and the battle pet is added
-                    // marking as dependent prevents saving the spell to database (intended)
-                    dependent = true;
-                }
 
                 player.SpellBook.Learn(trainerSpell.SpellId, dependent);
             }

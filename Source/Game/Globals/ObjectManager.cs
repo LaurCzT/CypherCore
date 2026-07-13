@@ -1,11 +1,10 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Collections;
 using Framework.Constants;
 using Framework.Database;
 using Framework.IO;
-using Game.Achievements;
 using Game.Conditions;
 using Game.DataStorage;
 using Game.Entities;
@@ -1708,41 +1707,7 @@ namespace Game
                     _eventStorage.Add(node.DepartureEventID);
             }
 
-            // Load all possible event ids from criterias
-            void addCriteriaEventsToStore(IReadOnlyList<Criteria> criteriaList)
-            {
-                foreach (Criteria criteria in criteriaList)
-                {
-                    if (criteria.Entry.Asset != 0)
-                        _eventStorage.Add(criteria.Entry.Asset);
-                }
-            };
 
-            CriteriaType[] eventCriteriaTypes = [CriteriaType.PlayerTriggerGameEvent, CriteriaType.AnyoneTriggerGameEventScenario];
-            foreach (CriteriaType criteriaType in eventCriteriaTypes)
-            {
-                addCriteriaEventsToStore(Global.CriteriaMgr.GetPlayerCriteriaByType(criteriaType, 0));
-                addCriteriaEventsToStore(Global.CriteriaMgr.GetGuildCriteriaByType(criteriaType));
-                addCriteriaEventsToStore(Global.CriteriaMgr.GetQuestObjectiveCriteriaByType(criteriaType));
-            }
-
-            foreach (ScenarioRecord scenario in CliDB.ScenarioStorage.Values)
-            {
-                foreach (CriteriaType criteriaType in eventCriteriaTypes)
-                    addCriteriaEventsToStore(Global.CriteriaMgr.GetScenarioCriteriaByTypeAndScenario(criteriaType, scenario.Id));
-            }
-
-            foreach (var (gameEventId, _) in Global.CriteriaMgr.GetCriteriaByStartEvent(CriteriaStartEvent.SendEvent))
-            {
-                if (gameEventId != 0)
-                    _eventStorage.Add(gameEventId);
-            }
-
-            foreach (var (gameEventId, _) in Global.CriteriaMgr.GetCriteriaByFailEvent(CriteriaFailEvent.SendEvent))
-            {
-                if (gameEventId != 0)
-                    _eventStorage.Add(gameEventId);
-            }
         }
 
         public void LoadEventScripts()

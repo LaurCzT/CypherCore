@@ -1,15 +1,13 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
 using Framework.Database;
 using Framework.Dynamic;
-using Game.Achievements;
 using Game.AI;
 using Game.Arenas;
 using Game.BattleFields;
 using Game.BattleGrounds;
-using Game.BattlePets;
 using Game.Chat;
 using Game.DataStorage;
 using Game.Groups;
@@ -31,6 +29,9 @@ namespace Game.Entities
 {
     public partial class Player : Unit
     {
+        public PlayerData GetPlayerData() { return m_playerData; }
+        public ActivePlayerData GetActivePlayerData() { return m_activePlayerData; }
+
         public Player(WorldSession session) : base(true)
         {
             ObjectTypeMask |= TypeMask.Player;
@@ -100,9 +101,7 @@ namespace Game.Entities
 
             _cinematicMgr = new CinematicManager(this);
 
-            m_achievementSys = new PlayerAchievementMgr(this);
             reputationMgr = new ReputationMgr(this);
-            m_questObjectiveCriteriaMgr = new QuestObjectiveCriteriaManager(this);
             m_sceneMgr = new SceneMgr(this);
 
             for (var i = 0; i < SharedConst.MaxPlayerBGQueues; ++i)
@@ -136,7 +135,6 @@ namespace Game.Entities
 
             _declinedname = null;
             Runes = null;
-            m_achievementSys = null;
             reputationMgr = null;
 
             _cinematicMgr.Dispose();
@@ -425,7 +423,6 @@ namespace Game.Entities
                 }
             }
 
-            m_achievementSys.UpdateTimedCriteria(diff);
 
             DoMeleeAttackIfReady();
 
@@ -1090,21 +1087,7 @@ namespace Game.Entities
             SendPacket(new PetSpells());
         }
 
-        public void SetBattlePetData(BattlePet pet = null)
-        {
-            if (pet != null)
-            {
-                SetSummonedBattlePetGUID(pet.PacketInfo.Guid);
-                SetCurrentBattlePetBreedQuality(pet.PacketInfo.Quality);
-                SetWildBattlePetLevel(pet.PacketInfo.Level);
-            }
-            else
-            {
-                SetSummonedBattlePetGUID(ObjectGuid.Empty);
-                SetCurrentBattlePetBreedQuality((byte)BattlePetBreedQuality.Poor);
-                SetWildBattlePetLevel(0);
-            }
-        }
+
 
         public void StopCastingCharm()
         {
@@ -1609,7 +1592,6 @@ namespace Game.Entities
                     break;
                 case ActionButtonType.Companion:
                 {
-                    if (GetSession().GetBattlePetMgr().GetPet(ObjectGuid.Create(HighGuid.BattlePet, action)) == null)
                     {
                         Log.outError(LogFilter.Player, 
                             $"Player::IsActionButtonDataValid: " +
@@ -5554,8 +5536,6 @@ namespace Game.Entities
             // SMSG_EQUIPMENT_SET_LIST
             SendEquipmentSetList();
 
-            m_achievementSys.SendAllData(this);
-            m_questObjectiveCriteriaMgr.SendAllData(this);
 
             // SMSG_LOGIN_SETTIMESPEED
             float TimeSpeed = 0.01666667f;

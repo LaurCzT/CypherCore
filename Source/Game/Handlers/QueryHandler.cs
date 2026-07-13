@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -19,13 +19,11 @@ namespace Game
         [WorldPacketHandler(ClientOpcodes.QueryPlayerNames, Processing = PacketProcessing.Inplace)]
         void HandleQueryPlayerNames(QueryPlayerNames queryPlayerName)
         {
-            QueryPlayerNamesResponse response = new();
-            foreach (ObjectGuid guid in queryPlayerName.Players)
-            {
-                BuildNameQueryData(guid, out NameCacheLookupResult nameCacheLookupResult);
-                response.Players.Add(nameCacheLookupResult);
-            }
-
+            QueryPlayerNameResponse response = new();
+            
+            BuildNameQueryData(queryPlayerName.Player, out NameCacheLookupResult nameCacheLookupResult);
+            response.Result = nameCacheLookupResult;
+            
             SendPacket(response);
         }
 

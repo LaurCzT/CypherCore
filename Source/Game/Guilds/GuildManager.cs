@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -402,7 +402,6 @@ namespace Game
                     stmt.SetInt64(0, pair.Key);
                     SQLResult criteriaResult = DB.Characters.Query(stmt);
 
-                    (achievementCount, criteriaCount) = pair.Value.GetAchievementMgr().LoadFromDB(achievementResult, criteriaResult);
                 }
 
                 Log.outInfo(LogFilter.ServerLoading, $"Loaded {achievementCount} guild achievements and {criteriaCount} criterias in {Time.Diff(oldMSTime)} ms.");

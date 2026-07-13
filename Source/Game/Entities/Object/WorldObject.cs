@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -11,7 +11,6 @@ using Game.Maps;
 using Game.Movement;
 using Game.Networking;
 using Game.Networking.Packets;
-using Game.Scenarios;
 using Game.Spells;
 using System;
 using System.Collections.Generic;
@@ -42,6 +41,8 @@ namespace Game.Entities
 
             m_staticFloorZ = MapConst.VMAPInvalidHeightValue;
         }
+
+        public ObjectFieldData GetObjectData() { return m_objectData; }
 
         public virtual void Dispose()
         {
@@ -167,10 +168,23 @@ namespace Game.Entities
                     flags.CombatVictim = true;
             }
 
+            // Always use 1.14.0 update fields adapter (this server targets Classic 1.14.x clients)
+            Game.Networking.Adapters.V1_14_0.UpdateObjectBuilder1140.BuildCreateUpdateBlockForPlayer(data, this, target, flags, updateType);
+            return;
+
             WorldPacket buffer = new();
             buffer.WriteUInt8((byte)updateType);
             buffer.WritePackedGuid(GetGUID());
-            buffer.WriteUInt8((byte)tempObjectType);
+
+            byte modernObjectType = (byte)tempObjectType;
+            if (tempObjectType >= TypeId.Unit)
+                modernObjectType -= 2;
+
+            int modernTypeMask = (int)ObjectTypeMask;
+            modernTypeMask = (modernTypeMask & 0x07) | ((modernTypeMask & ~0x1F) >> 2);
+
+            buffer.WriteUInt8(modernObjectType);
+            buffer.WriteInt32(modernTypeMask);
 
             BuildMovementUpdate(buffer, flags, target);
             BuildValuesCreate(buffer, target);
@@ -194,6 +208,10 @@ namespace Game.Entities
 
         public void BuildValuesUpdateBlockForPlayer(UpdateData data, Player target)
         {
+            // Always use 1.14.0 update fields adapter (this server targets Classic 1.14.x clients)
+            Game.Networking.Adapters.V1_14_0.UpdateObjectBuilder1140.BuildValuesUpdateBlockForPlayer(data, this, target);
+            return;
+
             WorldPacket buffer = new();
             buffer.WriteUInt8((byte)UpdateType.Values);
             buffer.WritePackedGuid(GetGUID());
@@ -282,10 +300,6 @@ namespace Game.Entities
 
                 data.WritePackedGuid(GetGUID());                                         // MoverGUID
 
-                data.WriteUInt32((uint)unit.GetUnitMovementFlags());
-                data.WriteUInt32((uint)unit.GetUnitMovementFlags2());
-                data.WriteUInt32((uint)unit.GetExtraUnitMovementFlags2());
-
                 data.WriteUInt32(unit.m_movementInfo.Time);                     // MoveTime
                 data.WriteFloat(unit.GetPositionX());
                 data.WriteFloat(unit.GetPositionY());
@@ -301,32 +315,17 @@ namespace Game.Entities
                 //for (public uint i = 0; i < RemoveForcesIDs.Count; ++i)
                 //    *data << ObjectGuid(RemoveForcesIDs);
 
-                data.WriteBit(HasStandingOnGameObjectGUID);                    // HasStandingOnGameObjectGUID
+                data.WriteBits((uint)unit.GetUnitMovementFlags(), 30);         // MovementFlags
+                data.WriteBits((uint)unit.GetUnitMovementFlags2(), 18);        // MovementFlags2
+
                 data.WriteBit(!unit.m_movementInfo.transport.guid.IsEmpty());  // HasTransport
                 data.WriteBit(HasFall);                                        // HasFall
                 data.WriteBit(HasSpline);                                      // HasSpline - marks that the unit uses spline movement
                 data.WriteBit(false);                                          // HeightChangeFailed
                 data.WriteBit(false);                                          // RemoteTimeValid
-                data.WriteBit(HasInertia);                                     // HasInertia
 
                 if (!unit.m_movementInfo.transport.guid.IsEmpty())
                     unit.m_movementInfo.transport.Write(data);
-
-                if (HasStandingOnGameObjectGUID)
-                    data.WritePackedGuid(unit.m_movementInfo.standingOnGameObjectGUID.Value);
-
-                if (HasInertia)
-                {
-                    data.WriteInt32(unit.m_movementInfo.inertia.Value.id);
-                    data.WriteXYZ(unit.m_movementInfo.inertia.Value.force);
-                    data.WriteUInt32(unit.m_movementInfo.inertia.Value.lifetime);
-                }
-
-                if (HasAdvFlying)
-                {
-                    data.WriteFloat(unit.m_movementInfo.advFlying.Value.forwardVelocity);
-                    data.WriteFloat(unit.m_movementInfo.advFlying.Value.upVelocity);
-                }
 
                 if (HasFall)
                 {
@@ -355,31 +354,12 @@ namespace Game.Entities
                 if (movementForces != null)
                 {
                     data.WriteInt32(movementForces.GetForces().Count);
-                    data.WriteFloat(movementForces.GetModMagnitude());          // MovementForcesModMagnitude
                 }
                 else
                 {
                     data.WriteUInt32(0);
-                    data.WriteFloat(1.0f);                                       // MovementForcesModMagnitude
                 }
 
-                data.WriteFloat(2.0f);                                           // advFlyingAirFriction
-                data.WriteFloat(65.0f);                                          // advFlyingMaxVel
-                data.WriteFloat(1.0f);                                           // advFlyingLiftCoefficient
-                data.WriteFloat(3.0f);                                           // advFlyingDoubleJumpVelMod
-                data.WriteFloat(10.0f);                                          // advFlyingGlideStartMinHeight
-                data.WriteFloat(100.0f);                                         // advFlyingAddImpulseMaxSpeed
-                data.WriteFloat(90.0f);                                          // advFlyingMinBankingRate
-                data.WriteFloat(140.0f);                                         // advFlyingMaxBankingRate
-                data.WriteFloat(180.0f);                                         // advFlyingMinPitchingRateDown
-                data.WriteFloat(360.0f);                                         // advFlyingMaxPitchingRateDown
-                data.WriteFloat(90.0f);                                          // advFlyingMinPitchingRateUp
-                data.WriteFloat(270.0f);                                         // advFlyingMaxPitchingRateUp
-                data.WriteFloat(30.0f);                                          // advFlyingMinTurnVelocityThreshold
-                data.WriteFloat(80.0f);                                          // advFlyingMaxTurnVelocityThreshold
-                data.WriteFloat(2.75f);                                          // advFlyingSurfaceFriction
-                data.WriteFloat(7.0f);                                           // advFlyingOverMaxDeceleration
-                data.WriteFloat(0.4f);                                           // advFlyingLaunchSpeedCoefficient
 
                 data.WriteBit(HasSpline);
                 data.FlushBits();
@@ -1564,17 +1544,7 @@ namespace Game.Entities
             m_zoneScript = FindZoneScript();
         }
 
-        public Scenario GetScenario()
-        {
-            if (IsInWorld)
-            {
-                InstanceMap instanceMap = GetMap().ToInstanceMap();
-                if (instanceMap != null)
-                    return instanceMap.GetInstanceScenario();
-            }
 
-            return null;
-        }
 
         public TempSummon SummonCreature(int entry, float x, float y, float z, float o = 0, TempSummonType despawnType = TempSummonType.ManualDespawn, TimeSpan despawnTime = default, ObjectGuid privateObjectOwner = default)
         {

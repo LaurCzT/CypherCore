@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Collections;
@@ -45,7 +45,7 @@ namespace Game
             EnumCharactersResult charResult = new();
             charResult.Success = true;
             charResult.IsDeletedCharacters = holder.IsDeletedCharacters();
-            charResult.DisabledClassesMask = WorldConfig.Values[WorldCfg.CharacterCreatingDisabledClassmask].Int32;
+            charResult.DisabledClassesMask = (uint?)WorldConfig.Values[WorldCfg.CharacterCreatingDisabledClassmask].Int32;
 
             if (!charResult.IsDeletedCharacters)
                 _legitCharacters.Clear();
@@ -147,7 +147,7 @@ namespace Game
             EnumCharactersResult charEnum = new();
             charEnum.Success = true;
             charEnum.IsDeletedCharacters = true;
-            charEnum.DisabledClassesMask = WorldConfig.Values[WorldCfg.CharacterCreatingDisabledClassmask].Int32;
+            charEnum.DisabledClassesMask = (uint?)WorldConfig.Values[WorldCfg.CharacterCreatingDisabledClassmask].Int32;
 
             if (!result.IsEmpty())
             {
@@ -881,7 +881,6 @@ namespace Game
                 pCurrChar.SetGuildLevel(0);
             }
 
-            pCurrChar.GetSession().GetBattlePetMgr().SendJournalLockStatus();
 
             pCurrChar.SendInitialPacketsBeforeAddToMap();
 

@@ -1,10 +1,9 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
 using Framework.Dynamic;
 using Game.BattleGrounds;
-using Game.BattlePets;
 using Game.Combat;
 using Game.DataStorage;
 using Game.Entities;
@@ -1753,10 +1752,7 @@ namespace Game.Spells
 
                     bool dependent = false;
 
-                    var speciesEntry = BattlePetMgr.GetBattlePetSpeciesBySpell(itemEffect.SpellID);
-                    if (speciesEntry != null)
                     {
-                        player.GetSession().GetBattlePetMgr().AddPet(speciesEntry.Id, BattlePetMgr.SelectPetDisplay(speciesEntry), BattlePetMgr.RollPetBreed(speciesEntry.Id), BattlePetMgr.GetDefaultPetQuality(speciesEntry.Id));
                         // If the spell summons a battle pet, we fake that it has been learned and the battle pet is added
                         // marking as dependent prevents saving the spell to database (intended)
                         dependent = true;
@@ -5409,23 +5405,7 @@ namespace Game.Spells
             ExecuteLogEffectCreateItem(effectInfo.Effect, m_misc.Data0);
         }
 
-        [SpellEffectHandler(SpellEffectName.GrantBattlepetLevel)]
-        void EffectGrantBattlePetLevel()
-        {
-            if (effectHandleMode != SpellEffectHandleMode.HitTarget)
-                return;
 
-            Player playerCaster = m_caster.ToPlayer();
-            if (playerCaster == null)
-                return;
-
-            if (unitTarget == null || !unitTarget.IsCreature())
-                return;
-
-            playerCaster.GetSession()
-                .GetBattlePetMgr()
-                .GrantBattlePetLevel(unitTarget.GetBattlePetCompanionGUID(), (ushort)damage);
-        }
 
         [SpellEffectHandler(SpellEffectName.GiveExperience)]
         void EffectGiveExperience()
@@ -5465,9 +5445,6 @@ namespace Game.Spells
             if (unitTarget == null || !unitTarget.IsTypeId(TypeId.Player))
                 return;
 
-            BattlePetMgr battlePetMgr = unitTarget.ToPlayer().GetSession().GetBattlePetMgr();
-            if (battlePetMgr != null)
-                battlePetMgr.HealBattlePetsPct((byte)damage);
         }
 
         [SpellEffectHandler(SpellEffectName.EnableBattlePets)]
@@ -5481,7 +5458,6 @@ namespace Game.Spells
 
             Player player = unitTarget.ToPlayer();
             player.SetPlayerFlag(PlayerFlags.PetBattlesUnlocked);
-            player.GetSession().GetBattlePetMgr().UnlockSlot(BattlePetSlots.Slot0);
         }
 
         [SpellEffectHandler(SpellEffectName.ChangeBattlepetQuality)]
@@ -5525,30 +5501,21 @@ namespace Game.Spells
             ushort level = (ushort)m_CastItem.GetModifier(ItemModifier.BattlePetLevel);
             int displayId = m_CastItem.GetModifier(ItemModifier.BattlePetDisplayId);
 
-            BattlePetSpeciesRecord speciesEntry = CliDB.BattlePetSpeciesStorage.LookupByKey(speciesId);
-            if (speciesEntry == null)
                 return;
 
             Player player = m_caster.ToPlayer();
-            BattlePetMgr battlePetMgr = player.GetSession().GetBattlePetMgr();
-            if (battlePetMgr == null)
                 return;
 
-            if (battlePetMgr.GetMaxPetLevel() < level)
             {
-                battlePetMgr.SendError(BattlePetError.TooHighLevelToUncage, speciesEntry.CreatureID);
                 SendCastResult(SpellCastResult.CantAddBattlePet);
                 return;
             }
 
-            if (battlePetMgr.HasMaxPetCount(speciesEntry, player.GetGUID()))
             {
-                battlePetMgr.SendError(BattlePetError.CantHaveMorePetsOfThatType, speciesEntry.CreatureID);
                 SendCastResult(SpellCastResult.CantAddBattlePet);
                 return;
             }
 
-            battlePetMgr.AddPet(speciesId, displayId, breed, quality, level);
 
             player.SendPlaySpellVisual(player, SharedConst.SpellVisualUncagePet, 0, 0, 0.0f, false);
 
@@ -5810,22 +5777,7 @@ namespace Game.Spells
             unitCaster.Talk(broadcastTextId, chatType, Global.CreatureTextMgr.GetRangeForChatType(chatType), unitTarget);
         }
 
-        [SpellEffectHandler(SpellEffectName.GrantBattlepetExperience)]
-        void EffectGrantBattlePetExperience()
-        {
-            if (effectHandleMode != SpellEffectHandleMode.HitTarget)
-                return;
 
-            Player playerCaster = m_caster.ToPlayer();
-            if (playerCaster == null)
-                return;
-
-            if (unitTarget == null || !unitTarget.IsCreature())
-                return;
-
-            playerCaster.GetSession().GetBattlePetMgr().GrantBattlePetExperience(
-                unitTarget.GetBattlePetCompanionGUID(), (ushort)damage, BattlePetXpSource.SpellEffect);
-        }
 
         [SpellEffectHandler(SpellEffectName.ModifyAuraStacks)]
         void EffectModifyAuraStacks()

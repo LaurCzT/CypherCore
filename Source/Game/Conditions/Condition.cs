@@ -1,11 +1,10 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
 using Game.DataStorage;
 using Game.Entities;
 using Game.Maps;
-using Game.Scenarios;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -90,31 +89,9 @@ namespace Game.Conditions
                     condMeets = Global.WorldStateMgr.GetValue(ConditionValue1, map) == ConditionValue2;
                     break;
                 }
-                case ConditionTypes.RealmAchievement:
-                {
-                    var achievement = CliDB.AchievementStorage.LookupByKey(ConditionValue1);
-                    if (achievement != null && Global.AchievementMgr.IsRealmCompleted(achievement))
-                        condMeets = true;
-                    break;
-                }
                 case ConditionTypes.DifficultyId:
                 {
                     condMeets = (uint)map.GetDifficultyID() == ConditionValue1;
-                    break;
-                }
-                case ConditionTypes.ScenarioStep:
-                {
-                    InstanceMap instanceMap = map.ToInstanceMap();
-                    if (instanceMap != null)
-                    {
-                        Scenario scenario = instanceMap.GetInstanceScenario();
-                        if (scenario != null)
-                        {
-                            ScenarioStepRecord step = scenario.GetStep();
-                            if (step != null)
-                                condMeets = step.Id == ConditionValue1;
-                        }
-                    }
                     break;
                 }
                 default:
@@ -430,12 +407,6 @@ namespace Game.Conditions
                         else
                             condMeets = player.IsGameMaster();
                     }
-                    break;
-                }
-                case ConditionTypes.BattlePetCount:
-                {
-                    if (player != null)
-                        condMeets = MathFunctions.CompareValues((ComparisionType)ConditionValue3, player.GetSession().GetBattlePetMgr().GetPetCount(CliDB.BattlePetSpeciesStorage.LookupByKey(ConditionValue1), player.GetGUID()), ConditionValue2);
                     break;
                 }
                 case ConditionTypes.SceneInProgress:

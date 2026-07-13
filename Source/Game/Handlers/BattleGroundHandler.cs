@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -271,15 +271,15 @@ namespace Game
             if (!GetPlayer().InBattlegroundQueue())
             {
                 Log.outDebug(LogFilter.Battleground, "CMSG_BATTLEFIELD_PORT {0} Slot: {1}, Unk: {2}, Time: {3}, AcceptedInvite: {4}. Player not in queue!",
-                    GetPlayerInfo(), battlefieldPort.Ticket.Id, battlefieldPort.Ticket.Type, battlefieldPort.Ticket.JoinTime, battlefieldPort.AcceptedInvite);
+                    GetPlayerInfo(), 0, 0, 0, battlefieldPort.AcceptedInvite);
                 return;
             }
 
-            BattlegroundQueueTypeId bgQueueTypeId = GetPlayer().GetBattlegroundQueueTypeId(battlefieldPort.Ticket.Id);
+            BattlegroundQueueTypeId bgQueueTypeId = GetPlayer().GetBattlegroundQueueTypeId(0);
             if (bgQueueTypeId == default)
             {
                 Log.outDebug(LogFilter.Battleground, "CMSG_BATTLEFIELD_PORT {0} Slot: {1}, Unk: {2}, Time: {3}, AcceptedInvite: {4}. Invalid queueSlot!",
-                    GetPlayerInfo(), battlefieldPort.Ticket.Id, battlefieldPort.Ticket.Type, battlefieldPort.Ticket.JoinTime, battlefieldPort.AcceptedInvite);
+                    GetPlayerInfo(), 0, 0, 0, battlefieldPort.AcceptedInvite);
                 return;
             }
 
@@ -290,14 +290,14 @@ namespace Game
             if (!bgQueue.GetPlayerGroupInfoData(GetPlayer().GetGUID(), out ginfo))
             {
                 Log.outDebug(LogFilter.Battleground, "CMSG_BATTLEFIELD_PORT {0} Slot: {1}, Unk: {2}, Time: {3}, AcceptedInvite: {4}. Player not in queue (No player Group Info)!",
-                    GetPlayerInfo(), battlefieldPort.Ticket.Id, battlefieldPort.Ticket.Type, battlefieldPort.Ticket.JoinTime, battlefieldPort.AcceptedInvite);
+                    GetPlayerInfo(), 0, 0, 0, battlefieldPort.AcceptedInvite);
                 return;
             }
             // if action == 1, then instanceId is required
             if (ginfo.IsInvitedToBGInstanceGUID == 0 && battlefieldPort.AcceptedInvite)
             {
                 Log.outDebug(LogFilter.Battleground, "CMSG_BATTLEFIELD_PORT {0} Slot: {1}, Unk: {2}, Time: {3}, AcceptedInvite: {4}. Player is not invited to any bg!",
-                    GetPlayerInfo(), battlefieldPort.Ticket.Id, battlefieldPort.Ticket.Type, battlefieldPort.Ticket.JoinTime, battlefieldPort.AcceptedInvite);
+                    GetPlayerInfo(), 0, 0, 0, battlefieldPort.AcceptedInvite);
                 return;
             }
 
@@ -317,7 +317,7 @@ namespace Game
             if (bg == null && battlefieldPort.AcceptedInvite)
             {
                 Log.outDebug(LogFilter.Battleground, "CMSG_BATTLEFIELD_PORT {0} Slot: {1}, Unk: {2}, Time: {3}, AcceptedInvite: {4}. Cant find BG with id {5}!",
-                    GetPlayerInfo(), battlefieldPort.Ticket.Id, battlefieldPort.Ticket.Type, battlefieldPort.Ticket.JoinTime, battlefieldPort.AcceptedInvite, ginfo.IsInvitedToBGInstanceGUID);
+                    GetPlayerInfo(), 0, 0, 0, battlefieldPort.AcceptedInvite, ginfo.IsInvitedToBGInstanceGUID);
                 return;
             }
             else if (bg != null)
@@ -336,7 +336,7 @@ namespace Game
                 {
                     // send bg command result to show nice message
                     BattlefieldStatusFailed battlefieldStatus;
-                    Global.BattlegroundMgr.BuildBattlegroundStatusFailed(out battlefieldStatus, bgQueueTypeId, GetPlayer(), battlefieldPort.Ticket.Id, GroupJoinBattlegroundResult.Deserters);
+                    Global.BattlegroundMgr.BuildBattlegroundStatusFailed(out battlefieldStatus, bgQueueTypeId, GetPlayer(), 0, GroupJoinBattlegroundResult.Deserters);
                     SendPacket(battlefieldStatus);
                     battlefieldPort.AcceptedInvite = false;
                     Log.outDebug(LogFilter.Battleground, 
@@ -375,7 +375,7 @@ namespace Game
                 GetPlayer().FinishTaxiFlight();
 
                 BattlefieldStatusActive battlefieldStatus;
-                Global.BattlegroundMgr.BuildBattlegroundStatusActive(out battlefieldStatus, bg, GetPlayer(), battlefieldPort.Ticket.Id, GetPlayer().GetBattlegroundQueueJoinTime(bgQueueTypeId), bgQueueTypeId);
+                Global.BattlegroundMgr.BuildBattlegroundStatusActive(out battlefieldStatus, bg, GetPlayer(), 0, GetPlayer().GetBattlegroundQueueJoinTime(bgQueueTypeId), bgQueueTypeId);
                 SendPacket(battlefieldStatus);
 
                 // remove BattlegroundQueue status from BGmgr

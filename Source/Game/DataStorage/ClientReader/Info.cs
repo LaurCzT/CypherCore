@@ -1,4 +1,4 @@
-﻿/*using System.Collections.Generic;
+/*using System.Collections.Generic;
 using System.Data.Common;
 using System;
 using System.Runtime.InteropServices;
@@ -10,7 +10,7 @@ namespace Game.DataStorage.ClientReader.Info
     class WDC4Info
     {
         //                           WDC4
-        // This section only applies to versions DF(10.1.0.48480) … 10.2.5.52393.
+        // This section only applies to versions DF(10.1.0.48480) � 10.2.5.52393.
         // In WDC4 'encrypted_status' struct got added after 'common_data', this structure holds the IDs of encrypted records,
         // likely to give a better idea of what IDs are available/unavailable while loading the DB2 (provided you have keys available).
 

@@ -1,9 +1,8 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
 using Framework.Database;
-using Game.Achievements;
 using Game.DataStorage;
 using Game.Entities;
 using System.Collections.Generic;
@@ -13,21 +12,7 @@ namespace Game.Chat
     [CommandGroup("reset")]
     class ResetCommands
     {
-        [Command("achievements", RBACPermissions.CommandResetAchievements, true)]
-        static bool HandleResetAchievementsCommand(CommandHandler handler, PlayerIdentifier player)
-        {
-            if (player == null)
-                player = PlayerIdentifier.FromTargetOrSelf(handler);
-            if (player == null)
-                return false;
 
-            if (player.IsConnected())
-                player.GetConnectedPlayer().ResetAchievements();
-            else
-                PlayerAchievementMgr.DeleteFromDB(player.GetGUID());
-
-            return true;
-        }
 
         [Command("honor", RBACPermissions.CommandResetHonor, true)]
         static bool HandleResetHonorCommand(CommandHandler handler, PlayerIdentifier player)

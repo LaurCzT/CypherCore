@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -44,17 +44,13 @@ namespace Game.Entities
             if (grp.IsLFGGroup())
             {
                 ObjectGuid gguid = grp.GetGUID();
-                if (Global.LFGMgr.GetKicksLeft(gguid) == 0)
                     return PartyResult.PartyLfgBootLimit;
 
-                LfgState state = Global.LFGMgr.GetState(gguid);
-                if (Global.LFGMgr.IsVoteKickActive(gguid))
                     return PartyResult.PartyLfgBootInProgress;
 
                 if (grp.GetMembersCount() <= SharedConst.LFGKickVotesNeeded)
                     return PartyResult.PartyLfgBootTooFewPlayers;
 
-                if (state == LfgState.FinishedDungeon)
                     return PartyResult.PartyLfgBootDungeonComplete;
 
                 Player player = Global.ObjAccessor.FindConnectedPlayer(guidMember);
@@ -88,15 +84,13 @@ namespace Game.Entities
 
         public bool IsUsingLfg()
         {
-            return Global.LFGMgr.GetState(GetGUID()) != LfgState.None;
+            return false;
         }
 
         bool InRandomLfgDungeon()
         {
-            if (Global.LFGMgr.SelectedRandomLfgDungeon(GetGUID()))
             {
                 Map map = GetMap();
-                return Global.LFGMgr.InLfgDungeonMap(GetGUID(), map.GetId(), map.GetDifficultyID());
             }
 
             return false;

@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -6,7 +6,6 @@ using Framework.Database;
 using Framework.Dynamic;
 using Game.BattleFields;
 using Game.BattleGrounds;
-using Game.BattlePets;
 using Game.DataStorage;
 using Game.Movement;
 using Game.Spells;
@@ -2429,9 +2428,6 @@ namespace Game.Entities
                     {
                         if (summonProperties.Slot == (int)SummonSlot.MiniPet && summonProperties.HasFlag(SummonPropertiesFlags.SummonFromBattlePetJournal))
                         {
-                            var battlePetSpecies = battlePetSpeciesByCreature.LookupByKey(effect.EffectMiscValue[0]);
-                            if (battlePetSpecies != null)
-                                BattlePetMgr.AddBattlePetSpeciesBySpell(effect.SpellID, battlePetSpecies);
                         }
                     }
                 }

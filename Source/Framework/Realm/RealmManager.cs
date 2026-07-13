@@ -311,6 +311,10 @@ public class RealmManager : Singleton<RealmManager>
             byte[] serverSecret = new byte[0].GenerateRandomKey(32);
             byte[] keyData = clientSecret.Combine(serverSecret);
 
+            // Log realm join details for debugging realm handoff and address selection
+            Log.outDebug(LogFilter.Realmlist,
+                $"JoinRealm: realm={realm.Name} realmId={realm.Id.GetAddressString()} client={clientAddress} advertise={address.Ip}:{address.Port} serverSecretLen={serverSecret.Length} clientSecretLen={clientSecret.Length}");
+
             PreparedStatement stmt = LoginDatabase.GetPreparedStatement(LoginStatements.UPD_BNET_GAME_ACCOUNT_LOGIN_INFO);
             stmt.SetBytes(0, keyData);
             stmt.SetString(1, clientAddress.ToString());

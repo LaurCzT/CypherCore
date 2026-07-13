@@ -1,9 +1,8 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
 using Framework.Database;
-using Game.Achievements;
 using Game.DataStorage;
 using Game.Entities;
 using Game.Groups;
@@ -19,7 +18,6 @@ namespace Game.Guilds
     {
         public Guild()
         {
-            m_achievementSys = new GuildAchievementMgr(this);
 
             for (var i = 0; i < m_bankEventLog.Length; ++i)
                 m_bankEventLog[i] = new LogHolder<BankEventLogEntry>();
@@ -137,7 +135,6 @@ namespace Game.Guilds
         {
             SQLTransaction trans = new();
 
-            GetAchievementMgr().SaveToDB(trans);
 
             DB.Characters.CommitTransaction(trans);
         }
@@ -296,37 +293,10 @@ namespace Game.Guilds
 
         public void HandleSetAchievementTracking(WorldSession session, List<int> achievementIds)
         {
-            Player player = session.GetPlayer();
-
-            Member member = GetMember(player.GetGUID());
-            if (member != null)
-            {
-                List<int> criteriaIds = new();
-                foreach (var achievementId in achievementIds)
-                {
-                    var achievement = CliDB.AchievementStorage.LookupByKey(achievementId);
-                    if (achievement != null)
-                    {
-                        CriteriaTree tree = Global.CriteriaMgr.GetCriteriaTree(achievement.CriteriaTree);
-                        if (tree != null)
-                        {
-                            CriteriaManager.WalkCriteriaTree(tree, node =>
-                            {
-                                if (node.Criteria != null)
-                                    criteriaIds.Add(node.Criteria.Id);
-                            });
-                        }
-                    }
-                }
-
-                GetAchievementMgr().SendAllTrackedCriterias(player, criteriaIds);
-                member.SetTrackedCriteriaIds(criteriaIds);
-            }
         }
 
         public void HandleGetAchievementMembers(WorldSession session, int achievementId)
         {
-            GetAchievementMgr().SendAchievementMembers(session.GetPlayer(), achievementId);
         }
 
         public void HandleSetMOTD(WorldSession session, string motd)
@@ -610,7 +580,6 @@ namespace Game.Guilds
             invite.BorderStyle = m_emblemInfo.GetBorderStyle();
             invite.BorderColor = m_emblemInfo.GetBorderColor();
             invite.Background = m_emblemInfo.GetBackgroundColor();
-            invite.AchievementPoints = GetAchievementMgr().GetAchievementPoints();
 
             invite.InviterName = player.GetName();
             invite.GuildName = GetName();
@@ -1216,7 +1185,6 @@ namespace Game.Guilds
             foreach (var entry in CliDB.GuildPerkSpellsStorage.Values)
                 player.SpellBook.Learn(entry.SpellID, true);
 
-            GetAchievementMgr().SendAllData(player);
 
             // tells the client to request bank withdrawal limit
             player.SendPacket(new GuildMemberDailyReset());
@@ -2529,14 +2497,10 @@ namespace Game.Guilds
             BroadcastWorker(packetBuilder);
         }
 
-        bool HasAchieved(int achievementId)
-        {
-            return GetAchievementMgr().HasAchieved(achievementId);
-        }
+        bool HasAchieved(int achievementId) { return false; }
 
         public void UpdateCriteria(CriteriaType type, long miscValue1, long miscValue2, long miscValue3, WorldObject refe, Player player)
         {
-            GetAchievementMgr().UpdateCriteria(type, miscValue1, miscValue2, miscValue3, refe, player);
         }
 
         public void HandleNewsSetSticky(WorldSession session, int newsId, bool sticky)
@@ -2595,7 +2559,6 @@ namespace Game.Guilds
 
         public int GetMembersCount() { return m_members.Count; }
 
-        public GuildAchievementMgr GetAchievementMgr() { return m_achievementSys; }
 
         // Pre-6.x guild leveling
         public byte GetLevel() { return GuildConst.OldMaxLevel; }
@@ -2700,7 +2663,6 @@ namespace Game.Guilds
         LogHolder<EventLogEntry> m_eventLog = new();
         LogHolder<BankEventLogEntry>[] m_bankEventLog = new LogHolder<BankEventLogEntry>[GuildConst.MaxBankTabs + 1];
         LogHolder<NewsLogEntry> m_newsLog = new();
-        GuildAchievementMgr m_achievementSys;
         #endregion
 
         #region Classes

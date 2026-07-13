@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -1418,7 +1418,6 @@ namespace Game
                         return false;
                     }
                     break;
-                case ConditionTypes.QuestRewarded:
                 case ConditionTypes.QuestTaken:
                 case ConditionTypes.QuestNone:
                 case ConditionTypes.QuestComplete:
@@ -2043,49 +2042,6 @@ namespace Game
 
         public static uint GetPlayerConditionLfgValue(Player player, PlayerConditionLfgStatus status)
         {
-            if (player.GetGroup() == null)
-                return 0;
-
-            switch (status)
-            {
-                case PlayerConditionLfgStatus.InLFGDungeon:
-                    return Global.LFGMgr.InLfgDungeonMap(player.GetGUID(), player.GetMapId(), player.GetMap().GetDifficultyID()) ? 1 : 0u;
-                case PlayerConditionLfgStatus.InLFGRandomDungeon:
-                    return Global.LFGMgr.InLfgDungeonMap(player.GetGUID(), player.GetMapId(), player.GetMap().GetDifficultyID()) &&
-                        Global.LFGMgr.SelectedRandomLfgDungeon(player.GetGUID()) ? 1 : 0u;
-                case PlayerConditionLfgStatus.InLFGFirstRandomDungeon:
-                {
-                    if (!Global.LFGMgr.InLfgDungeonMap(player.GetGUID(), player.GetMapId(), player.GetMap().GetDifficultyID()))
-                        return 0;
-
-                    int selectedRandomDungeon = Global.LFGMgr.GetSelectedRandomDungeon(player.GetGUID());
-                    if (selectedRandomDungeon == 0)
-                        return 0;
-
-                    DungeonFinding.LfgReward reward = Global.LFGMgr.GetRandomDungeonReward(selectedRandomDungeon, player.GetLevel());
-                    if (reward != null)
-                    {
-                        Quest quest = Global.ObjectMgr.GetQuestTemplate(reward.firstQuest);
-                        if (quest != null)
-                            if (player.CanRewardQuest(quest, false))
-                                return 1;
-                    }
-                    return 0;
-                }
-                case PlayerConditionLfgStatus.PartialClear:
-                    break;
-                case PlayerConditionLfgStatus.StrangerCount:
-                    break;
-                case PlayerConditionLfgStatus.VoteKickCount:
-                    break;
-                case PlayerConditionLfgStatus.BootCount:
-                    break;
-                case PlayerConditionLfgStatus.GearDiff:
-                    break;
-                default:
-                    break;
-            }
-
             return 0;
         }
 
@@ -3102,7 +3058,6 @@ namespace Game
             new ConditionTypeInfo("Reputation",           true, true,  false, false),
             new ConditionTypeInfo("Team",                 true, false, false, false),
             new ConditionTypeInfo("Skill",                true, true,  false, false),
-            new ConditionTypeInfo("Quest Rewarded",       true, false, false, false),
             new ConditionTypeInfo("Quest Taken",          true, false, false, false),
             new ConditionTypeInfo("Drunken",              true, false, false, false),
             new ConditionTypeInfo("WorldState",           true, true,  false, false),

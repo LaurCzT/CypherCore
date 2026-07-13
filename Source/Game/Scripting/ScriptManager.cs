@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -813,9 +813,7 @@ namespace Game.Scripting
             Cypher.Assert(player != null);
             Cypher.Assert(achievement != null);
 
-            RunScript<AchievementScript>(p => 
-            p.OnCompleted(player, achievement), 
-            Global.AchievementMgr.GetAchievementScriptId(achievement.Id));
+ 
         }
 
         // AchievementCriteriaScript

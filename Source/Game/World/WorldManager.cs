@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework;
@@ -7,7 +7,6 @@ using Framework.Configuration;
 using Framework.Constants;
 using Framework.Database;
 using Framework.Realm;
-using Game.BattlePets;
 using Game.Chat;
 using Game.Collision;
 using Game.DataStorage;
@@ -758,10 +757,8 @@ namespace Game
             Global.ObjectMgr.LoadAreaTriggerScripts();
 
             Log.outInfo(LogFilter.ServerLoading, "Loading LFG entrance positions..."); // Must be after areatriggers
-            Global.LFGMgr.LoadLFGDungeons();
 
             Log.outInfo(LogFilter.ServerLoading, "Loading LFG rewards...");
-            Global.LFGMgr.LoadRewards();
 
             Log.outInfo(LogFilter.ServerLoading, "Loading Graveyard-zone links...");
             Global.ObjectMgr.LoadGraveyardZones();
@@ -835,21 +832,13 @@ namespace Game
             Global.ObjectMgr.LoadSkillTiers();
 
             Log.outInfo(LogFilter.ServerLoading, "Loading Criteria Modifier trees...");
-            Global.CriteriaMgr.LoadCriteriaModifiersTree();
             Log.outInfo(LogFilter.ServerLoading, "Loading Criteria Lists...");
-            Global.CriteriaMgr.LoadCriteriaList();
             Log.outInfo(LogFilter.ServerLoading, "Loading Criteria Data...");
-            Global.CriteriaMgr.LoadCriteriaData();
             Log.outInfo(LogFilter.ServerLoading, "Loading Achievements...");
-            Global.AchievementMgr.LoadAchievementReferenceList();
             Log.outInfo(LogFilter.ServerLoading, "Loading Achievements Scripts...");
-            Global.AchievementMgr.LoadAchievementScripts();
             Log.outInfo(LogFilter.ServerLoading, "Loading Achievement Rewards...");
-            Global.AchievementMgr.LoadRewards();
             Log.outInfo(LogFilter.ServerLoading, "Loading Achievement Reward Locales...");
-            Global.AchievementMgr.LoadRewardLocales();
             Log.outInfo(LogFilter.ServerLoading, "Loading Completed Achievements...");
-            Global.AchievementMgr.LoadCompletedAchievements();
 
             // Load before guilds and arena teams
             Log.outInfo(LogFilter.ServerLoading, "Loading character cache store...");
@@ -862,10 +851,8 @@ namespace Game
             if (WorldConfig.Values[WorldCfg.BlackmarketEnabled].Bool)
             {
                 Log.outInfo(LogFilter.ServerLoading, "Loading Black Market Templates...");
-                Global.BlackMarketMgr.LoadTemplates();
 
                 Log.outInfo(LogFilter.ServerLoading, "Loading Black Market Auctions...");
-                Global.BlackMarketMgr.LoadAuctions();
             }
 
             Log.outInfo(LogFilter.ServerLoading, "Loading Guild rewards...");
@@ -1113,14 +1100,10 @@ namespace Game
             Global.CharacterTemplateDataStorage.LoadCharacterTemplates();
 
             Log.outInfo(LogFilter.ServerLoading, "Loading battle pets info...");
-            BattlePetMgr.Initialize();
 
             Log.outInfo(LogFilter.ServerLoading, "Loading scenarios");
-            Global.ScenarioMgr.LoadDB2Data();
-            Global.ScenarioMgr.LoadDBData();
 
             Log.outInfo(LogFilter.ServerLoading, "Loading scenario poi data");
-            Global.ScenarioMgr.LoadScenarioPOI();
 
             Log.outInfo(LogFilter.ServerLoading, "Loading phase names...");
             Global.ObjectMgr.LoadPhaseNames();
@@ -1462,7 +1445,6 @@ namespace Game
                 //- Update blackmarket, refresh auctions if necessary                
                 if (blackmarketNextRefreshTime <= LoopTime.ServerTime || firstUpdate)                
                 {
-                    Global.BlackMarketMgr.RefreshAuctions();
 
                     ServerTime previousPoint = firstUpdate ? LoopTime.ServerTime : blackmarketNextRefreshTime;
                     TimeSpan refreshPeriod = WorldConfig.Values[WorldCfg.BlackmarketUpdatePeriod].TimeSpan;
@@ -1471,7 +1453,6 @@ namespace Game
                 }
                 else
                 {
-                    Global.BlackMarketMgr.Update();
                 }
             }
 
@@ -1545,7 +1526,6 @@ namespace Game
                 Player.DeleteOldCharacters();
             }
 
-            Global.LFGMgr.Update(diff);
             _worldUpdateTime.RecordUpdateTimeDuration("UpdateLFGMgr");
 
             Global.GroupMgr.Update(diff);
@@ -2390,16 +2370,7 @@ namespace Game
             }
         }
 
-        public bool IsBattlePetJournalLockAcquired(ObjectGuid battlenetAccountGuid)
-        {
-            foreach (var sessionForBnet in m_sessionsByBnetGuid[battlenetAccountGuid])
-            {
-                if (sessionForBnet.GetBattlePetMgr().HasJournalLock())
-                    return true;
-            }
 
-            return false;
-        }
 
         public int GetPersistentWorldVariable(string var)
         {

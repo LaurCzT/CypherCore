@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -112,10 +112,6 @@ namespace Game.BattleGrounds
         void BuildBattlegroundStatusHeader(BattlefieldStatusHeader header, Player player, int ticketId, ServerTime joinTime, BattlegroundQueueTypeId queueId)
         {
             header.Ticket = new RideTicket();
-            header.Ticket.RequesterGuid = player.GetGUID();
-            header.Ticket.Id = ticketId;
-            header.Ticket.Type = RideType.Battlegrounds;
-            header.Ticket.JoinTime = joinTime;
             header.QueueID.Add(queueId.GetPacked());
             header.RangeMin = 0; // seems to always be 0
             header.RangeMax = SharedConst.DefaultMaxPlayerLevel; // alwyas max level of current expansion. Might be limited to account
@@ -128,10 +124,6 @@ namespace Game.BattleGrounds
         public void BuildBattlegroundStatusNone(out BattlefieldStatusNone battlefieldStatus, Player player, int ticketId, ServerTime joinTime)
         {
             battlefieldStatus = new BattlefieldStatusNone();
-            battlefieldStatus.Ticket.RequesterGuid = player.GetGUID();
-            battlefieldStatus.Ticket.Id = ticketId;
-            battlefieldStatus.Ticket.Type = RideType.Battlegrounds;
-            battlefieldStatus.Ticket.JoinTime = joinTime;
         }
 
         public void BuildBattlegroundStatusNeedConfirmation(out BattlefieldStatusNeedConfirmation battlefieldStatus, Battleground bg, Player player, int ticketId, ServerTime joinTime, TimeSpan timeout, BattlegroundQueueTypeId queueId)
@@ -168,10 +160,6 @@ namespace Game.BattleGrounds
         public void BuildBattlegroundStatusFailed(out BattlefieldStatusFailed battlefieldStatus, BattlegroundQueueTypeId queueId, Player pPlayer, int ticketId, GroupJoinBattlegroundResult result, ObjectGuid errorGuid = default)
         {
             battlefieldStatus = new BattlefieldStatusFailed();
-            battlefieldStatus.Ticket.RequesterGuid = pPlayer.GetGUID();
-            battlefieldStatus.Ticket.Id = ticketId;
-            battlefieldStatus.Ticket.Type = RideType.Battlegrounds;
-            battlefieldStatus.Ticket.JoinTime = pPlayer.GetBattlegroundQueueJoinTime(queueId);
             battlefieldStatus.QueueID = queueId.GetPacked();
             battlefieldStatus.Reason = result;
             if (!errorGuid.IsEmpty() && (result == GroupJoinBattlegroundResult.NotInBattleground || result == GroupJoinBattlegroundResult.JoinTimedOut))

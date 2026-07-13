@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -126,7 +126,6 @@ namespace Game.Networking.Packets
                         _worldPacket.WriteUInt8((byte)classAvailability.ClassID);
                         _worldPacket.WriteUInt8((byte)classAvailability.ActiveExpansionLevel);
                         _worldPacket.WriteUInt8((byte)classAvailability.AccountExpansionLevel);
-                        _worldPacket.WriteUInt8((byte)classAvailability.MinActiveExpansionLevel);
                     }
                 }
 
@@ -135,7 +134,6 @@ namespace Game.Networking.Packets
                 _worldPacket.WriteBit(SuccessInfo.NumPlayersHorde.HasValue);
                 _worldPacket.WriteBit(SuccessInfo.NumPlayersAlliance.HasValue);
                 _worldPacket.WriteBit(SuccessInfo.ExpansionTrialExpiration.HasValue);
-                _worldPacket.WriteBit(SuccessInfo.NewBuildKeys != null);
                 _worldPacket.FlushBits();
 
                 {
@@ -155,17 +153,8 @@ namespace Game.Networking.Packets
                 if (SuccessInfo.NumPlayersAlliance.HasValue)
                     _worldPacket.WriteUInt16(SuccessInfo.NumPlayersAlliance.Value);
 
-                if(SuccessInfo.ExpansionTrialExpiration.HasValue)
-                    _worldPacket.WriteInt64(SuccessInfo.ExpansionTrialExpiration.Value);
-
-                if (SuccessInfo.NewBuildKeys != null)
-                {
-                    for (int i = 0; i < 16; ++i)
-                    {
-                        _worldPacket.WriteUInt8(SuccessInfo.NewBuildKeys.NewBuildKey[i]);
-                        _worldPacket.WriteUInt8(SuccessInfo.NewBuildKeys.SomeKey[i]);
-                    }
-                }
+                if (SuccessInfo.ExpansionTrialExpiration.HasValue)
+                    _worldPacket.WriteInt32(SuccessInfo.ExpansionTrialExpiration.Value);
 
                 foreach (VirtualRealmInfo virtualRealm in SuccessInfo.VirtualRealms)
                     virtualRealm.Write(_worldPacket);
@@ -219,8 +208,7 @@ namespace Game.Networking.Packets
             public bool ForceCharacterTemplate; // forces the client to always use a character template when creating a new character. @see Templates. @todo implement
             public ushort? NumPlayersHorde; // number of horde players in this realm. @todo implement
             public ushort? NumPlayersAlliance; // number of alliance players in this realm. @todo implement
-            public long? ExpansionTrialExpiration; // expansion trial expiration unix timestamp
-            public NewBuild NewBuildKeys;
+            public int? ExpansionTrialExpiration; // expansion trial expiration unix timestamp
 
             public struct GameTime
             {
@@ -228,12 +216,6 @@ namespace Game.Networking.Packets
                 public uint TimeRemain;
                 public uint Unknown735;
                 public bool InGameRoom;
-            }
-
-            public class NewBuild
-            {
-                public Array<byte> NewBuildKey = new Array<byte>(16);
-                public Array<byte> SomeKey = new Array<byte>(16);
             }
         }
     }
@@ -372,23 +354,8 @@ namespace Game.Networking.Packets
     {
         byte[] EncryptionKey;
         bool Enabled;
-        static byte[] expandedPrivateKey;
 
         static byte[] EnableEncryptionSeed = [0x90, 0x9C, 0xD0, 0x50, 0x5A, 0x2C, 0x14, 0xDD, 0x5C, 0x2C, 0xC0, 0x64, 0x14, 0xF3, 0xFE, 0xC9];
-        static byte[] EnableEncryptionContext = [0xA7, 0x1F, 0xB6, 0x9B, 0xC9, 0x7C, 0xDD, 0x96, 0xE9, 0xBB, 0xB8, 0x21, 0x39, 0x8D, 0x5A, 0xD4];
-
-        static byte[] EnterEncryptedModePrivateKey =
-        [
-            0x08, 0xBD, 0xC7, 0xA3, 0xCC, 0xC3, 0x4F, 0x3F,
-            0x6A, 0x0B, 0xFF, 0xCF, 0x31, 0xC1, 0xB6, 0x97,
-            0x69, 0x1E, 0x72, 0x9A, 0x0A, 0xAB, 0x2C, 0x77,
-            0xC3, 0x6F, 0x8A, 0xE7, 0x5A, 0x9A, 0xA7, 0xC9
-        ];
-
-        static EnterEncryptedMode()
-        {
-            expandedPrivateKey = Ed25519.ExpandedPrivateKeyFromSeed(EnterEncryptedModePrivateKey);
-        }
 
         public EnterEncryptedMode(byte[] encryptionKey, bool enabled) : base(ServerOpcodes.EnterEncryptedMode)
         {
@@ -398,11 +365,11 @@ namespace Game.Networking.Packets
 
         public override void Write()
         {
-            HmacSha256 toSign = new(EncryptionKey);
-            toSign.Process(BitConverter.GetBytes(Enabled), 1);
-            toSign.Finish(EnableEncryptionSeed, 16);
+            HmacSha256 hash = new(EncryptionKey);
+            hash.Process(BitConverter.GetBytes(Enabled), 1);
+            hash.Finish(EnableEncryptionSeed, 16);
 
-            _worldPacket.WriteBytes(Ed25519.Sign(toSign.Digest, expandedPrivateKey, 0, EnableEncryptionContext));
+            _worldPacket.WriteBytes(RsaCrypt.RSA.SignHash(hash.Digest, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1).Reverse().ToArray());
             _worldPacket.WriteBit(Enabled);
             _worldPacket.FlushBits();
         }

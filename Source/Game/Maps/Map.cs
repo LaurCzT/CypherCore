@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -10,7 +10,6 @@ using Game.Entities;
 using Game.Groups;
 using Game.Networking;
 using Game.Networking.Packets;
-using Game.Scenarios;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -5165,8 +5164,6 @@ namespace Game.Maps
             if (i_data != null)
                 i_data.OnPlayerEnter(player);
 
-            if (i_scenario != null)
-                i_scenario.OnPlayerEnter(player);
 
             return true;
         }
@@ -5181,8 +5178,6 @@ namespace Game.Maps
                 i_data.UpdateCombatResurrection(diff);
             }
 
-            if (i_scenario != null)
-                i_scenario.Update(diff);
 
             if (i_instanceExpireEvent.HasValue && i_instanceExpireEvent.Value < LoopTime.ServerTime)
             {
@@ -5209,8 +5204,6 @@ namespace Game.Maps
                     : Time.Max(WorldConfig.Values[WorldCfg.InstanceUnloadDelay].TimeSpan, (Milliseconds)1);
             }
 
-            if (i_scenario != null)
-                i_scenario.OnPlayerExit(player);
 
             base.RemovePlayerFromMap(player, remove);
         }
@@ -5487,15 +5480,12 @@ namespace Game.Maps
             return i_data;
         }
 
-        public InstanceScenario GetInstanceScenario() { return i_scenario; }
 
-        public void SetInstanceScenario(InstanceScenario scenario) { i_scenario = scenario; }
 
         public InstanceLock GetInstanceLock() { return i_instanceLock; }
 
         InstanceScript i_data;
         int i_script_id;
-        InstanceScenario i_scenario;
         InstanceLock i_instanceLock;
         GroupInstanceReference i_owningGroupRef = new();
         DateTime? i_instanceExpireEvent;

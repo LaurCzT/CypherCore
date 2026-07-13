@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Collections;
@@ -29,22 +29,20 @@ namespace Game.Networking.Packets
             _worldPacket.WriteBit(IsNewPlayerRestrictionSkipped);
             _worldPacket.WriteBit(IsNewPlayerRestricted);
             _worldPacket.WriteBit(IsNewPlayer);
-            _worldPacket.WriteBit(IsTrialAccountRestricted);
             _worldPacket.WriteBit(DisabledClassesMask.HasValue);
+            _worldPacket.WriteBit(IsAlliedRacesCreationAllowed);
+            _worldPacket.WriteBit(IsTrialAccountRestricted);
+            _worldPacket.FlushBits();
             _worldPacket.WriteInt32(Characters.Count);
             _worldPacket.WriteInt32(MaxCharacterLevel);
             _worldPacket.WriteInt32(RaceUnlockData.Count);
             _worldPacket.WriteInt32(UnlockedConditionalAppearances.Count);
-            _worldPacket.WriteInt32(RaceLimitDisables.Count);
 
             if (DisabledClassesMask.HasValue)
-                _worldPacket.WriteInt32(DisabledClassesMask.Value);
+                _worldPacket.WriteUInt32(DisabledClassesMask.Value);
 
             foreach (UnlockedConditionalAppearance unlockedConditionalAppearance in UnlockedConditionalAppearances)
                 unlockedConditionalAppearance.Write(_worldPacket);
-
-            foreach (RaceLimitDisableInfo raceLimitDisableInfo in RaceLimitDisables)
-                raceLimitDisableInfo.Write(_worldPacket);
 
             foreach (CharacterInfo charInfo in Characters)
                 charInfo.Write(_worldPacket);
@@ -58,15 +56,15 @@ namespace Game.Networking.Packets
         public bool IsNewPlayerRestrictionSkipped; // allows client to skip new player restrictions
         public bool IsNewPlayerRestricted; // forbids using level boost and class trials
         public bool IsNewPlayer; // forbids hero classes and allied races
+        public bool IsAlliedRacesCreationAllowed;
         public bool IsTrialAccountRestricted;
 
         public int MaxCharacterLevel = 1;
-        public int? DisabledClassesMask = new();
+        public uint? DisabledClassesMask = new();
 
         public List<CharacterInfo> Characters = new(); // all characters on the list
         public List<RaceUnlock> RaceUnlockData = new(); //
         public List<UnlockedConditionalAppearance> UnlockedConditionalAppearances = new();
-        public List<RaceLimitDisableInfo> RaceLimitDisables = new();
 
         public class CharacterInfo
         {
@@ -143,14 +141,7 @@ namespace Game.Networking.Packets
                     SpecID = (short)spec.Id;
 
                 LastLoginVersion = fields.Read<int>(22);
-                PersonalTabard = new()
-                {
-                    EmblemStyle = fields.Read<int>(23),
-                    EmblemColor = fields.Read<int>(24),
-                    BorderStyle = fields.Read<int>(25),
-                    BorderColor = fields.Read<int>(26),
-                    BackgroundColor = fields.Read<int>(27)
-                };
+
 
                 int equipmentFieldsPerSlot = 5;
 
@@ -216,9 +207,8 @@ namespace Game.Networking.Packets
                 data.WriteBit(FirstLogin);
                 data.WriteBit(BoostInProgress);
                 data.WriteBits(unkWod61x, 5);
-                data.WriteBits(0, 2); //unknown
-                data.WriteBit(RpeResetAvailable);
-                data.WriteBit(RpeResetQuestClearAvailable);
+                data.WriteBit(false);
+                data.WriteBit(ExpansionChosen);
 
                 foreach (string str in MailSenders)
                     data.WriteBits(str.GetByteCount() + 1, 6);
@@ -263,12 +253,10 @@ namespace Game.Networking.Packets
             public uint PetCreatureFamilyId;
             public bool BoostInProgress; // @todo
             public uint[] ProfessionIds = new uint[2];      // @todo
-            public Array<VisualItemInfo> VisualItems = new(34); // It was : (InventorySlots.ReagentBagEnd);
+            public Array<VisualItemInfo> VisualItems = new(23, new VisualItemInfo()); // Enums.Classic.InventorySlots.BagEnd
             public List<string> MailSenders = new();
             public List<uint> MailSenderTypes = new();
-            public bool RpeResetAvailable;
-            public bool RpeResetQuestClearAvailable;
-            public CustomTabardInfo PersonalTabard;
+            public bool ExpansionChosen = true;
 
             public struct VisualItemInfo
             {
@@ -325,18 +313,6 @@ namespace Game.Networking.Packets
 
             public int AchievementID;
             public int Unused;
-        }
-
-        public struct RaceLimitDisableInfo
-        {
-            public int RaceID;
-            public int BlockReason;
-
-            public void Write(WorldPacket data)
-            {
-                data.WriteInt32(RaceID);
-                data.WriteInt32(BlockReason);
-            }
         }
     }
 

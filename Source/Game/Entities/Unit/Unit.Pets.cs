@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -154,22 +154,6 @@ namespace Game.Entities
                     SetCritterGUID(minion.GetGUID());
                     if (ToPlayer() is Player thisPlayer)
                     {
-                        if (properties.HasFlag(SummonPropertiesFlags.SummonFromBattlePetJournal))
-                        {
-                            var pet = thisPlayer.GetSession().
-                                GetBattlePetMgr().GetPet(thisPlayer.GetSummonedBattlePetGUID());
-
-                            if (pet != null)
-                            {
-                                minion.SetBattlePetCompanionGUID(thisPlayer.GetSummonedBattlePetGUID());
-                                minion.SetBattlePetCompanionNameTimestamp(pet.NameTimestamp);
-                                minion.SetWildBattlePetLevel(pet.PacketInfo.Level);
-
-                                int display = pet.PacketInfo.DisplayID;
-                                if (display != 0)
-                                    minion.SetDisplayId(display, true);
-                            }
-                        }
                     }
                 }
 

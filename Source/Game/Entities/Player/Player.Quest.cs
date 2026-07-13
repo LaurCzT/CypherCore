@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -748,7 +748,6 @@ namespace Game.Entities
                             GetReputationMgr().SetVisible(factionEntry);
                         break;
                     case QuestObjectiveType.CriteriaTree:
-                        m_questObjectiveCriteriaMgr.ResetCriteriaTree(obj.ObjectID);
                         break;
                     default:
                         break;
@@ -2270,7 +2269,6 @@ namespace Game.Entities
                         SetQuestObjectiveData(obj, Math.Min(reqCurrencyCount, curCurrencyCount));
                         break;
                     case QuestObjectiveType.CriteriaTree:
-                        if (m_questObjectiveCriteriaMgr.HasCompletedObjective(obj))
                             SetQuestObjectiveData(obj, 1);
                         break;
                 }

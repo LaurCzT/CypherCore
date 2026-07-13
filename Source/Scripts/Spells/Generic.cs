@@ -4623,7 +4623,6 @@ namespace Scripts.Spells.Generic
             Player target = GetUnitOwner().ToPlayer();
             SpellInfo reviveBattlePetSpellInfo = SpellMgr.GetSpellInfo(SharedConst.SpellReviveBattlePets, Difficulty.None);
 
-            if (target.GetSession().GetBattlePetMgr().IsBattlePetSystemEnabled())
             {
                 Milliseconds expectedCooldown = GetAura().GetMaxDuration();
                 var remainingCooldown = target.GetSpellHistory().GetRemainingCategoryCooldown(reviveBattlePetSpellInfo);

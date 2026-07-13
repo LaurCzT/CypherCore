@@ -1,10 +1,10 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 namespace Game.Entities
 {
     /// <summary>
-    /// The idea of ​​the FairMultiplier is that both positive and negative modifiers, when applied, give a minimal effect.<br/>
+    /// The idea of ??the FairMultiplier is that both positive and negative modifiers, when applied, give a minimal effect.<br/>
     /// This is achieved by summing up positive multipliers(each modifier only affects the initial value),<br/>
     /// and multiplying negative multipliers (it also makes it be impossible to achieve a 100% negative effect).<br/>
     /// <br/>

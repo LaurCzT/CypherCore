@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -70,10 +70,10 @@ namespace Game.Networking.Packets
         /// <summary> InGame time speed (day/night animation + calendar) <br/>
         /// useless, only for testing?</summary>
         public float NewSpeed;
-        public DateTime ServerTimeHolidayOffset;
         public DateTime GameTime;
         public DateTime ServerTime;
         public DateTime GameTimeHolidayOffset;
+        public DateTime ServerTimeHolidayOffset;
     }
 
     public class ResetWeeklyCurrency : ServerPacket

@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -189,8 +189,6 @@ namespace Game.Groups
 
             m_masterLooterGuid = ObjectGuid.Create(HighGuid.Player, field.Read<long>(16));
 
-            if (m_groupFlags.HasAnyFlag(GroupFlags.Lfg))
-                Global.LFGMgr._LoadFromDB(field, GetGUID());
         }
 
         public void LoadMemberFromDB(long guidLow, byte memberFlags, byte subgroup, LfgRoles roles)
@@ -223,7 +221,6 @@ namespace Game.Groups
 
             SubGroupCounterIncrease(subgroup);
 
-            Global.LFGMgr.SetupGroupMember(member.guid, GetGUID());
         }
 
         public void ConvertToLFG()
@@ -608,16 +605,7 @@ namespace Game.Groups
 
                 SendUpdate();
 
-                if (IsLFGGroup() && GetMembersCount() == 1)
-                {
-                    Player leader = Global.ObjAccessor.FindPlayer(GetLeaderGUID());
-                    var mapId = Global.LFGMgr.GetDungeonMapId(GetGUID());
-                    if (mapId == 0 || leader == null || (leader.IsAlive() && leader.GetMapId() != mapId))
-                    {
-                        Disband();
-                        return false;
-                    }
-                }
+
 
                 if (m_memberMgr.GetSize() < ((IsLFGGroup() || IsBGGroup()) ? 1 : 2))
                     Disband();
@@ -870,24 +858,15 @@ namespace Game.Groups
             {
                 PartyLFGInfo lfgInfos = new();
 
-                lfgInfos.Slot = Global.LFGMgr.GetLFGDungeonEntry(Global.LFGMgr.GetDungeon(m_guid));
                 lfgInfos.BootCount = 0;
                 lfgInfos.Aborted = false;
 
-                lfgInfos.MyFlags = (byte)(Global.LFGMgr.GetState(m_guid) == LfgState.FinishedDungeon ? 2 : 0);
-                lfgInfos.MyRandomSlot = Global.LFGMgr.GetSelectedRandomDungeon(player.GetGUID());
 
                 lfgInfos.MyPartialClear = 0;
                 lfgInfos.MyGearDiff = 0.0f;
                 lfgInfos.MyFirstReward = false;
 
-                DungeonFinding.LfgReward reward = Global.LFGMgr.GetRandomDungeonReward(partyUpdate.LfgInfos.Value.MyRandomSlot, player.GetLevel());
-                if (reward != null)
-                {
-                    Quest quest = Global.ObjectMgr.GetQuestTemplate(reward.firstQuest);
-                    if (quest != null)
-                        lfgInfos.MyFirstReward = player.CanRewardQuest(quest, false);
-                }
+
 
                 lfgInfos.MyStrangerCount = 0;
                 lfgInfos.MyKickVoteCount = 0;

@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -26,7 +26,6 @@ namespace Game.Chat
         static bool HandleReloadAchievementRewardCommand(CommandHandler handler)
         {
             Log.outInfo(LogFilter.Server, "Re-Loading Achievement Reward Data...");
-            Global.AchievementMgr.LoadRewards();
             handler.SendGlobalGMSysMessage("DB table `achievement_reward` reloaded.");
             return true;
         }
@@ -260,7 +259,6 @@ namespace Game.Chat
         static bool HandleReloadCriteriaDataCommand(CommandHandler handler)
         {
             Log.outInfo(LogFilter.Server, "Re-Loading Additional Criteria Data...");
-            Global.CriteriaMgr.LoadCriteriaData();
             handler.SendGlobalGMSysMessage("DB table `criteria_data` reloaded.");
             return true;
         }
@@ -415,7 +413,6 @@ namespace Game.Chat
         static bool HandleReloadLfgRewardsCommand(CommandHandler handler)
         {
             Log.outInfo(LogFilter.Server, "Re-Loading lfg dungeon rewards...");
-            Global.LFGMgr.LoadRewards();
             handler.SendGlobalGMSysMessage("DB table `lfg_dungeon_rewards` reloaded.");
             return true;
         }
@@ -424,7 +421,6 @@ namespace Game.Chat
         static bool HandleReloadAchievementRewardLocaleCommand(CommandHandler handler)
         {
             Log.outInfo(LogFilter.Server, "Re-Loading Achievement Reward Data Locale...");
-            Global.AchievementMgr.LoadRewardLocales();
             handler.SendGlobalGMSysMessage("DB table `achievement_reward_locale` reloaded.");
             return true;
         }

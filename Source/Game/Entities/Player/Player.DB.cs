@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Collections;
@@ -3021,8 +3021,6 @@ namespace Game.Entities
             SetObjectScale(1.0f);
 
             // load achievements before anything else to prevent multiple gains for the same achievement/criteria on every loading (as loading does call UpdateAchievementCriteria)
-            m_achievementSys.LoadFromDB(holder.GetResult(PlayerLoginQueryLoad.Achievements), holder.GetResult(PlayerLoginQueryLoad.CriteriaProgress));
-            m_questObjectiveCriteriaMgr.LoadFromDB(holder.GetResult(PlayerLoginQueryLoad.QuestStatusObjectivesCriteria), holder.GetResult(PlayerLoginQueryLoad.QuestStatusObjectivesCriteriaProgress));
 
             SetMoney(Math.Min(money, PlayerConst.MaxMoneyAmount));
 
@@ -3641,11 +3639,8 @@ namespace Game.Entities
             }
 
             // Unlock battle pet system if it's enabled in bnet account
-            if (GetSession().GetBattlePetMgr().IsBattlePetSystemEnabled())
                 SpellBook.Learn(SharedConst.SpellBattlePetTraining, false);
 
-            m_achievementSys.CheckAllAchievementCriteria(this);
-            m_questObjectiveCriteriaMgr.CheckAllQuestObjectiveCriteria(this);
 
             PushQuests();
 
@@ -3988,9 +3983,7 @@ namespace Game.Entities
             _SaveAuras(characterTransaction);
             _SaveSkills(characterTransaction);
             _SaveStoredAuraTeleportLocations(characterTransaction);
-            m_achievementSys.SaveToDB(characterTransaction);
             reputationMgr.SaveToDB(characterTransaction);
-            m_questObjectiveCriteriaMgr.SaveToDB(characterTransaction);
             _SaveEquipmentSets(characterTransaction);
             GetSession().SaveTutorialsData(characterTransaction);                 // changed only while character in game
             _SaveInstanceTimeRestrictions(characterTransaction);
@@ -4004,7 +3997,6 @@ namespace Game.Entities
 
             // TODO: Move this out
             GetSession().GetCollectionMgr().SaveAccountToys(loginTransaction);
-            GetSession().GetBattlePetMgr().SaveToDB(loginTransaction);
             GetSession().GetCollectionMgr().SaveAccountHeirlooms(loginTransaction);
             GetSession().GetCollectionMgr().SaveAccountMounts(loginTransaction);
             GetSession().GetCollectionMgr().SaveAccountItemAppearances(loginTransaction);

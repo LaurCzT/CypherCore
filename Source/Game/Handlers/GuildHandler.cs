@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -694,12 +694,6 @@ namespace Game
                 guild.HandleSetAchievementTracking(this, packet.AchievementIDs);
         }
 
-        [WorldPacketHandler(ClientOpcodes.GuildGetAchievementMembers)]
-        void HandleGuildGetAchievementMembers(GuildGetAchievementMembers getAchievementMembers)
-        {
-            Guild guild = GetPlayer().GetGuild();
-            if (guild != null)
-                guild.HandleGetAchievementMembers(this, getAchievementMembers.AchievementID);
-        }
+
     }
 }

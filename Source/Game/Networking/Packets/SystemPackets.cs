@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -16,6 +16,9 @@ namespace Game.Networking.Packets
         {
             _worldPacket.WriteUInt8(ComplaintStatus);
 
+            _worldPacket.WriteUInt32(0); // ScrollOfResurrectionRequestsRemaining
+            _worldPacket.WriteUInt32(0); // ScrollOfResurrectionMaxRequestsPerDay
+
             _worldPacket.WriteUInt32(CfgRealmID);
             _worldPacket.WriteInt32(CfgRealmRecID);
 
@@ -23,7 +26,9 @@ namespace Game.Networking.Packets
             _worldPacket.WriteUInt32(RAFSystem.MaxRecruitMonths);
             _worldPacket.WriteUInt32(RAFSystem.MaxRecruitmentUses);
             _worldPacket.WriteUInt32(RAFSystem.DaysInCycle);
-            _worldPacket.WriteUInt32(RAFSystem.Unknown1007);
+
+            _worldPacket.WriteUInt32(0); // TwitterPostThrottleLimit
+            _worldPacket.WriteUInt32(0); // TwitterPostThrottleCooldown
 
             _worldPacket.WriteUInt32(TokenPollTimeSeconds);
             _worldPacket.WriteUInt32(KioskSessionMinutes);

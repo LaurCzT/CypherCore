@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Collections;
@@ -7,7 +7,6 @@ using Framework.Database;
 using Framework.Realm;
 using Game.Accounts;
 using Game.BattleGrounds;
-using Game.BattlePets;
 using Game.Chat;
 using Game.Entities;
 using Game.Guilds;
@@ -43,7 +42,6 @@ namespace Game
             recruiterId = recruiter;
             isRecruiter = isARecruiter;
             expireTime = (Minutes)1; // 1 min after socket loss, session is deleted
-            _battlePetMgr = new BattlePetMgr(this);
             _collectionMgr = new CollectionMgr(this);
 
             m_Address = sock.GetRemoteIpAddress().Address.ToString();
@@ -146,10 +144,6 @@ namespace Game
 
                 // Remove pet
                 _player.RemovePet(null, PetSaveMode.AsCurrent, true);
-
-                ///- Release battle pet journal lock
-                if (_battlePetMgr.HasJournalLock())
-                    _battlePetMgr.ToggleJournalLock(false);
 
                 // Clear whisper whitelist
                 _player.ClearWhisperWhiteList();
@@ -401,9 +395,11 @@ namespace Game
 
             if (packet.GetOpcode() == ServerOpcodes.Unknown || packet.GetOpcode() == ServerOpcodes.Max)
             {
-                Log.outError(LogFilter.Network, $"Prevented sending of UnknownOpcode to {GetPlayerInfo()}");
+                Log.outError(LogFilter.Network, $"Prevented sending of UnknownOpcode ({packet.GetType().Name}) to {GetPlayerInfo()}");
                 return;
             }
+
+            Log.outInfo(LogFilter.Network, $"Sending packet: {packet.GetOpcode()} ({packet.GetType().Name})");
 
             ConnectionType conIdx = packet.GetConnection();
             if (conIdx != ConnectionType.Instance && PacketManager.IsInstanceOnlyOpcode(packet.GetOpcode()))
@@ -857,8 +853,6 @@ namespace Game
             ConnectionStatus bnetConnected = new();
             bnetConnected.State = 1;
             SendPacket(bnetConnected);
-
-            _battlePetMgr.LoadFromDB(holder.GetResult(AccountInfoQueryLoad.BattlePets), holder.GetResult(AccountInfoQueryLoad.BattlePetSlot));
         }
 
         public RBACData GetRBACData()
@@ -962,7 +956,6 @@ namespace Game
         public void SetCalendarEventCreationCooldown(ServerTime cooldown) { _calendarEventCreationCooldown = cooldown; }
 
         // Battle Pets
-        public BattlePetMgr GetBattlePetMgr() { return _battlePetMgr; }
         public CollectionMgr GetCollectionMgr() { return _collectionMgr; }
 
         // Battlenet
@@ -1034,8 +1027,6 @@ namespace Game
 
         // Packets cooldown
         ServerTime _calendarEventCreationCooldown;
-
-        BattlePetMgr _battlePetMgr;
 
         AsyncCallbackProcessor<QueryCallback> _queryProcessor = new();
         AsyncCallbackProcessor<TransactionCallback> _transactionCallbacks = new();

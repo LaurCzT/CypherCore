@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Collections;
@@ -115,12 +115,10 @@ namespace Game.Networking.Packets
 
         public override void Read()
         {
-            Players = new ObjectGuid[_worldPacket.ReadInt32()];
-            for (var i = 0; i < Players.Length; ++i)
-                Players[i] = _worldPacket.ReadPackedGuid();
+            Player = _worldPacket.ReadPackedGuid();
         }
 
-        public ObjectGuid[] Players;
+        public ObjectGuid Player;
     }
 
     public class QueryPlayerNamesResponse : ServerPacket
@@ -135,6 +133,22 @@ namespace Game.Networking.Packets
         }
         
         public List<NameCacheLookupResult> Players = new();
+    }
+    
+    public class QueryPlayerNameResponse : ServerPacket
+    {
+        public QueryPlayerNameResponse() : base(ServerOpcodes.QueryPlayerNameByCommunityIdResponse) { }
+
+        public override void Write()
+        {
+            _worldPacket.WriteUInt8(Result.Result);
+            _worldPacket.WritePackedGuid(Result.Player);
+
+            if (Result.Result == 0)
+                Result.Data.Write(_worldPacket);
+        }
+        
+        public NameCacheLookupResult Result;
     }
     
     public class QueryPageText : ClientPacket
@@ -633,6 +647,7 @@ namespace Game.Networking.Packets
             for (byte i = 0; i < SharedConst.MaxDeclinedNameCases; ++i)
                 data.WriteBits(DeclinedNames.Name[i].GetByteCount(), 7);
             
+            data.FlushBits();
             for (byte i = 0; i < SharedConst.MaxDeclinedNameCases; ++i)
                 data.WriteString(DeclinedNames.Name[i]);
 

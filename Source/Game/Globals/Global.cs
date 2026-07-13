@@ -1,25 +1,21 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Game;
-using Game.Achievements;
 using Game.AI;
 using Game.Arenas;
 using Game.BattleFields;
 using Game.BattleGrounds;
-using Game.BlackMarket;
 using Game.Cache;
 using Game.Chat;
 using Game.Collision;
 using Game.DataStorage;
-using Game.DungeonFinding;
 using Game.Entities;
 using Game.Groups;
 using Game.Loots;
 using Game.Maps;
 using Game.Networking;
 using Game.PvP;
-using Game.Scenarios;
 using Game.Scripting;
 using Game.Services;
 using Game.SupportSystem;
@@ -49,7 +45,6 @@ public static class Global
 
     //Groups
     public static GroupManager GroupMgr { get { return GroupManager.Instance; } }
-    public static LFGManager LFGMgr { get { return LFGManager.Instance; } }
     public static ArenaTeamManager ArenaTeamMgr { get { return ArenaTeamManager.Instance; } }
 
     //Maps System
@@ -60,7 +55,6 @@ public static class Global
     public static WaypointManager WaypointMgr { get { return WaypointManager.Instance; } }
     public static TransportManager TransportMgr { get { return TransportManager.Instance; } }
     public static InstanceLockManager InstanceLockMgr { get { return InstanceLockManager.Instance; } }
-    public static ScenarioManager ScenarioMgr { get { return ScenarioManager.Instance; } }
 
     //PVP
     public static BattlegroundManager BattlegroundMgr { get { return BattlegroundManager.Instance; } }
@@ -72,8 +66,6 @@ public static class Global
     public static BNetAccountManager BNetAccountMgr { get { return BNetAccountManager.Instance; } }
 
     //Achievement
-    public static AchievementGlobalMgr AchievementMgr { get { return AchievementGlobalMgr.Instance; } }
-    public static CriteriaManager CriteriaMgr { get { return CriteriaManager.Instance; } }
 
     //DataStorage
     public static AreaTriggerDataStorage AreaTriggerDataStorage { get { return AreaTriggerDataStorage.Instance; } }
@@ -98,7 +90,6 @@ public static class Global
     public static SpellManager SpellMgr { get { return SpellManager.Instance; } }
     public static SupportManager SupportMgr { get { return SupportManager.Instance; } }
     public static WardenCheckManager WardenCheckMgr { get { return WardenCheckManager.Instance; } }
-    public static BlackMarketManager BlackMarketMgr { get { return BlackMarketManager.Instance; } }
 
     public static WorldStateManager WorldStateMgr { get { return WorldStateManager.Instance; } }
 }

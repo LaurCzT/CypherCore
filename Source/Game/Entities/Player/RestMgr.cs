@@ -1,4 +1,4 @@
-﻿using Framework.Constants;
+using Framework.Constants;
 
 namespace Game.Entities
 {

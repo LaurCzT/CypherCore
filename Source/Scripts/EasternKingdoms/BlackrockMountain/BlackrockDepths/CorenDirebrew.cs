@@ -215,14 +215,7 @@ namespace Scripts.EasternKingdoms.BlackrockMountain.BlackrockDepths.CorenDirebre
         {
             _JustDied();
 
-            var players = me.GetMap().GetPlayers();
-            if (!players.Empty())
-            {
-                Group group = players[0].GetGroup();
-                if (group != null)
-                    if (group.IsLFGGroup())
-                        Global.LFGMgr.FinishDungeon(group.GetGUID(), 287, me.GetMap());
-            }
+
         }
 
         void SummonSister(int entry)

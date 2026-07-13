@@ -1,8 +1,7 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
-using Game.Achievements;
 using Game.BattleGrounds;
 using Game.Chat;
 using Game.DataStorage;
@@ -201,7 +200,6 @@ namespace Game.Entities
         public WorldObject seerView;
         Team m_team;
         ReputationMgr reputationMgr;
-        QuestObjectiveCriteriaManager m_questObjectiveCriteriaMgr;
         public AtLoginFlags atLoginFlags;
         public bool m_itemUpdateQueueBlocked;
 
@@ -224,7 +222,6 @@ namespace Game.Entities
 
         ResurrectionData _resurrectionData;
 
-        PlayerAchievementMgr m_achievementSys;
 
         SceneMgr m_sceneMgr;
 

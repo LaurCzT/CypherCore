@@ -1,4 +1,4 @@
-﻿using Framework.Constants;
+using Framework.Constants;
 using Game.DataStorage;
 using Game.Entities;
 using Game.Networking.Packets;
