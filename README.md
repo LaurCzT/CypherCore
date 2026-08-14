@@ -52,3 +52,8 @@ The current support game version is: 3.4.3.54261
 ### Legal
 * Blizzard, Battle.net, World of Warcraft, and all associated logos and designs are trademarks or registered trademarks of Blizzard Entertainment.
 * All other trademarks are the property of their respective owners. This project is **not** affiliated with Blizzard Entertainment or any of their family of sites.
+
+### Current Status (1.15.x Client Support)
+* **Working:** Character creation is fully functional and creates characters in the database correctly.
+* **Not Working:** Entering the world (the client freezes on the loading screen due to missing or unhandled init packets).
+
