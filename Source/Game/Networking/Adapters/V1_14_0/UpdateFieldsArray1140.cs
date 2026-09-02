@@ -123,6 +123,17 @@ namespace Game.Networking.Adapters.V1_14_0
                 SetUpdateField<ulong>((int)index + 2, (ulong)guid.GetHighValue());
                 //}
             }
+            else if (value is System.Numerics.Quaternion quat)
+            {
+                SetUpdateField<float>((int)index + 0, quat.X);
+                SetUpdateField<float>((int)index + 1, quat.Y);
+                SetUpdateField<float>((int)index + 2, quat.Z);
+                SetUpdateField<float>((int)index + 3, quat.W);
+            }
+            else if (value is Enum enumVal)
+            {
+                SetUpdateField<uint>(index, Convert.ToUInt32(enumVal), offset);
+            }
             else
                 throw new Exception($"Unhandled type {typeof(T).ToString()} in SetUpdateField!");
         }

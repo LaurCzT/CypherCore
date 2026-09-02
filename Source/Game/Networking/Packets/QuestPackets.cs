@@ -170,15 +170,15 @@ namespace Game.Networking.Packets
 
                 _worldPacket.WriteInt32(Info.PortraitGiver);
                 _worldPacket.WriteInt32(Info.PortraitGiverMount);
-                _worldPacket.WriteInt32(Info.PortraitGiverModelSceneID);
                 _worldPacket.WriteInt32(Info.PortraitTurnIn);
+                _worldPacket.WriteInt32(Info.PortraitGiverModelSceneID);
 
                 for (int i = 0; i < SharedConst.QuestRewardReputationsCount; ++i)
                 {
                     _worldPacket.WriteInt32(Info.RewardFactionID[i]);
                     _worldPacket.WriteInt32(Info.RewardFactionValue[i]);
                     _worldPacket.WriteInt32(Info.RewardFactionOverride[i]);
-                    _worldPacket.WriteInt32(Info.RewardFactionCapIn[i]);
+                    _worldPacket.WriteInt32(Info.RewardFactionCapIn[i] != 0 ? Info.RewardFactionCapIn[i] : 7);
                 }
 
                 _worldPacket.WriteUInt32(Info.RewardFactionFlags);
@@ -193,15 +193,12 @@ namespace Game.Networking.Packets
                 _worldPacket.WriteInt32(Info.CompleteSoundKitID);
 
                 _worldPacket.WriteInt32(Info.AreaGroupID);
-                _worldPacket.WriteInt64(Info.TimeAllowed.ToSeconds());
+                _worldPacket.WriteUInt32((uint)Info.TimeAllowed.ToSeconds());
 
                 _worldPacket.WriteInt32(Info.Objectives.Count);
                 _worldPacket.WriteUInt64((ulong)Info.AllowableRaces);
                 _worldPacket.WriteInt32(Info.TreasurePickerID);
                 _worldPacket.WriteInt32(Info.Expansion);
-                _worldPacket.WriteInt32(Info.ManagedWorldStateID);
-                _worldPacket.WriteInt32(Info.QuestSessionBonus);
-                _worldPacket.WriteInt32(Info.QuestGiverCreatureID);
 
                 _worldPacket.WriteBits(Info.LogTitle.GetByteCount(), 9);
                 _worldPacket.WriteBits(Info.LogDescription.GetByteCount(), 12);
@@ -212,6 +209,7 @@ namespace Game.Networking.Packets
                 _worldPacket.WriteBits(Info.PortraitTurnInText.GetByteCount(), 10);
                 _worldPacket.WriteBits(Info.PortraitTurnInName.GetByteCount(), 8);
                 _worldPacket.WriteBits(Info.QuestCompletionLog.GetByteCount(), 11);
+                _worldPacket.WriteBit(false); // ReadyForTranslation
                 _worldPacket.FlushBits();
 
                 foreach (QuestObjective questObjective in Info.Objectives)
@@ -316,8 +314,6 @@ namespace Game.Networking.Packets
             _worldPacket.WriteInt32(PortraitGiverMount);
             _worldPacket.WriteInt32(PortraitGiverModelSceneID);
             _worldPacket.WriteInt32(PortraitTurnIn);
-            _worldPacket.WriteInt32(QuestGiverCreatureID);
-            _worldPacket.WriteInt32(ConditionalRewardText.Count);
 
             _worldPacket.WriteBits(QuestTitle.GetByteCount(), 9);
             _worldPacket.WriteBits(RewardText.GetByteCount(), 12);
@@ -326,9 +322,6 @@ namespace Game.Networking.Packets
             _worldPacket.WriteBits(PortraitTurnInText.GetByteCount(), 10);
             _worldPacket.WriteBits(PortraitTurnInName.GetByteCount(), 8);
             _worldPacket.FlushBits();
-
-            foreach (ConditionalQuestText conditionalQuestText in ConditionalRewardText)
-                conditionalQuestText.Write(_worldPacket);
 
             _worldPacket.WriteString(QuestTitle);
             _worldPacket.WriteString(RewardText);
@@ -446,15 +439,12 @@ namespace Game.Networking.Packets
             _worldPacket.WriteInt32(PortraitTurnIn);
             _worldPacket.WriteUInt32(QuestFlags[0]); // Flags
             _worldPacket.WriteUInt32(QuestFlags[1]); // FlagsEx
-            _worldPacket.WriteUInt32(QuestFlags[2]); // FlagsEx
             _worldPacket.WriteInt32(SuggestedPartyMembers);
             _worldPacket.WriteInt32(LearnSpells.Count);
             _worldPacket.WriteInt32(DescEmotes.Count);
             _worldPacket.WriteInt32(Objectives.Count);
             _worldPacket.WriteInt32(QuestStartItemID);
             _worldPacket.WriteInt32(QuestSessionBonus);
-            _worldPacket.WriteInt32(QuestGiverCreatureID);
-            _worldPacket.WriteInt32(ConditionalDescriptionText.Count);
 
             foreach (int spell in LearnSpells)
                 _worldPacket.WriteInt32(spell);
@@ -495,16 +485,13 @@ namespace Game.Networking.Packets
             _worldPacket.WriteString(PortraitGiverName);
             _worldPacket.WriteString(PortraitTurnInText);
             _worldPacket.WriteString(PortraitTurnInName);
-
-            foreach (ConditionalQuestText conditionalQuestText in ConditionalDescriptionText)
-                conditionalQuestText.Write(_worldPacket);
         }
 
         public ObjectGuid QuestGiverGUID;
         public ObjectGuid InformUnit;
         public int QuestID;
         public int QuestPackageID;
-        public uint[] QuestFlags = new uint[3];
+        public uint[] QuestFlags = new uint[2];
         public int SuggestedPartyMembers;
         public QuestRewards Rewards = new();
         public List<QuestObjectiveSimple> Objectives = new();
@@ -543,7 +530,6 @@ namespace Game.Networking.Packets
             _worldPacket.WriteInt32(CompEmoteType);
             _worldPacket.WriteUInt32((uint)QuestFlags);
             _worldPacket.WriteUInt32((uint)QuestFlagsEx);
-            _worldPacket.WriteUInt32((uint)QuestFlagsEx2);
             _worldPacket.WriteInt32(SuggestPartyMembers);
             _worldPacket.WriteInt32(MoneyToGet);
             _worldPacket.WriteInt32(Collect.Count);
@@ -565,15 +551,9 @@ namespace Game.Networking.Packets
             _worldPacket.WriteBit(AutoLaunched);
             _worldPacket.FlushBits();
 
-            _worldPacket.WriteInt32(QuestGiverCreatureID);
-            _worldPacket.WriteInt32(ConditionalCompletionText.Count);
-
             _worldPacket.WriteBits(QuestTitle.GetByteCount(), 9);
             _worldPacket.WriteBits(CompletionText.GetByteCount(), 12);
             _worldPacket.FlushBits();
-
-            foreach (ConditionalQuestText conditionalQuestText in ConditionalCompletionText)
-                conditionalQuestText.Write(_worldPacket);
 
             _worldPacket.WriteString(QuestTitle);
             _worldPacket.WriteString(CompletionText);
@@ -1196,7 +1176,6 @@ namespace Game.Networking.Packets
             data.WriteInt32(QuestID);
             data.WriteUInt32((uint)QuestFlags);
             data.WriteUInt32((uint)QuestFlagsEx);
-            data.WriteUInt32((uint)QuestFlagsEx2);
             data.WriteInt32(SuggestedPartyMembers);
 
             data.WriteInt32(Emotes.Count);
@@ -1222,7 +1201,6 @@ namespace Game.Networking.Packets
         public List<QuestDescEmote> Emotes = new();
         public QuestFlags QuestFlags;
         public QuestFlagsEx QuestFlagsEx;
-        public QuestFlagsEx2 QuestFlagsEx2;
     }
 
     public struct QuestObjectiveSimple

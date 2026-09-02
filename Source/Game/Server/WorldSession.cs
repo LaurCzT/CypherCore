@@ -399,6 +399,9 @@ namespace Game
                 return;
             }
 
+            if (packet.GetOpcode() == ServerOpcodes.OnMonsterMove && PlayerLoading())
+                return;
+
             Log.outInfo(LogFilter.Network, $"Sending packet: {packet.GetOpcode()} ({packet.GetType().Name})");
 
             ConnectionType conIdx = packet.GetConnection();
@@ -452,10 +455,13 @@ namespace Game
             AccountDataTimes accountDataTimes = new();
             accountDataTimes.PlayerGuid = playerGuid;
             accountDataTimes.ServerTime = LoopTime.UnixServerTime;
-            for (AccountDataTypes i = 0; i < AccountDataTypes.Max; ++i)
+            const int count = 10;
+            accountDataTimes.AccountTimes = new long[count];
+            for (int i = 0; i < count; ++i)
             {
-                if (mask.HasType(i))
-                    accountDataTimes.AccountTimes[(int)i] = GetAccountData(i).Time;
+                AccountDataTypes type = (AccountDataTypes)i;
+                if (mask.HasType(type))
+                    accountDataTimes.AccountTimes[i] = GetAccountData(type).Time;
             }
 
             SendPacket(accountDataTimes);
@@ -904,11 +910,11 @@ namespace Game
 
         public void SendTimeSync()
         {
-            TimeSyncRequest timeSyncRequest = new();
-            timeSyncRequest.SequenceIndex = _timeSyncNextCounter;
-            SendPacket(timeSyncRequest);
+            // TimeSyncRequest timeSyncRequest = new();
+            // timeSyncRequest.SequenceIndex = _timeSyncNextCounter;
+            // SendPacket(timeSyncRequest);
 
-            _pendingTimeSyncRequests[_timeSyncNextCounter] = Time.NowRelative;
+            // _pendingTimeSyncRequests[_timeSyncNextCounter] = Time.NowRelative;
 
             // Schedule next sync in 10 sec (except for the 2 first packets, which are spaced by only 5s)
             _timeSyncTimer = _timeSyncNextCounter == 0 ? (Seconds)5 : (Seconds)10;

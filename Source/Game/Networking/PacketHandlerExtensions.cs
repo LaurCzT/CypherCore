@@ -122,9 +122,6 @@ public static class PacketHandlerExtensions
     public static void Read(this MovementInfo movementInfo, WorldPacket data)
     {
         movementInfo.Guid = data.ReadPackedGuid();
-        movementInfo.SetMovementFlags((MovementFlag)data.ReadUInt32());
-        movementInfo.SetMovementFlags2((MovementFlag2)data.ReadUInt32());
-        movementInfo.SetExtraMovementFlags2((MovementFlags3)data.ReadUInt32());
         movementInfo.Time = (RelativeTime)data.ReadUInt32();
         float x = data.ReadFloat();
         float y = data.ReadFloat();
@@ -136,7 +133,6 @@ public static class PacketHandlerExtensions
         movementInfo.stepUpStartElevation = data.ReadFloat();
 
         uint removeMovementForcesCount = data.ReadUInt32();
-
         uint moveIndex = data.ReadUInt32();
 
         for (uint i = 0; i < removeMovementForcesCount; ++i)
@@ -144,47 +140,25 @@ public static class PacketHandlerExtensions
             data.ReadPackedGuid();
         }
 
-        bool hasStandingOnGameObjectGUID = data.HasBit();
+        uint flags = data.ReadBits<uint>(30);
+        uint flagsExtra = data.ReadBits<uint>(18);
+        movementInfo.SetMovementFlags((MovementFlag)flags);
+        movementInfo.SetMovementFlags2((MovementFlag2)flagsExtra);
+
         bool hasTransport = data.HasBit();
         bool hasFall = data.HasBit();
-        bool hasSpline = data.HasBit(); // todo 6.x read this infos
+        bool hasSpline = data.HasBit();
 
         data.ReadBit(); // HeightChangeFailed
         data.ReadBit(); // RemoteTimeValid
-        bool hasInertia = data.HasBit();
-        bool hasAdvFlying = data.HasBit();
 
         if (hasTransport)
             movementInfo.transport.Read(data);
-
-        if (hasStandingOnGameObjectGUID)
-            movementInfo.standingOnGameObjectGUID = data.ReadPackedGuid();
-
-        if (hasInertia)
-        {
-            MovementInfo.Inertia inertia = new();
-            inertia.id = data.ReadInt32();
-            inertia.force = data.ReadPosition();
-            inertia.lifetime = data.ReadUInt32();
-
-            movementInfo.inertia = inertia;
-        }
-
-        if (hasAdvFlying)
-        {
-            MovementInfo.AdvFlying advFlying = new();
-
-            advFlying.forwardVelocity = data.ReadFloat();
-            advFlying.upVelocity = data.ReadFloat();
-            movementInfo.advFlying = advFlying;
-        }
 
         if (hasFall)
         {
             movementInfo.jump.fallTime = data.ReadUInt32();
             movementInfo.jump.zspeed = data.ReadFloat();
-
-            // ResetBitReader
 
             bool hasFallDirection = data.HasBit();
             if (hasFallDirection)
@@ -194,6 +168,11 @@ public static class PacketHandlerExtensions
                 movementInfo.jump.xyspeed = data.ReadFloat();
             }
         }
+
+        if (hasSpline)
+        {
+            data.ReadFloat(); // splineElevation
+        }
     }
 
     public static void Write(this MovementInfo movementInfo, WorldPacket data)
@@ -201,16 +180,10 @@ public static class PacketHandlerExtensions
         bool hasTransportData = !movementInfo.transport.guid.IsEmpty();
         bool hasFallDirection = movementInfo.HasMovementFlag(MovementFlag.Falling | MovementFlag.FallingFar);
         bool hasFallData = hasFallDirection || movementInfo.jump.fallTime != 0;
-        bool hasSpline = false; // todo 6.x send this infos
-        bool hasInertia = movementInfo.inertia.HasValue;
-        bool hasAdvFlying = movementInfo.advFlying.HasValue;
-        bool hasStandingOnGameObjectGUID = movementInfo.standingOnGameObjectGUID.HasValue;
+        bool hasSpline = false;
 
         data.WritePackedGuid(movementInfo.Guid);
-        data.WriteUInt32((uint)movementInfo.GetMovementFlags());
-        data.WriteUInt32((uint)movementInfo.GetMovementFlags2());
-        data.WriteUInt32((uint)movementInfo.GetExtraMovementFlags2());
-        data.WriteUInt32(movementInfo.Time);
+        data.WriteUInt32((uint)movementInfo.Time);
         data.WriteFloat(movementInfo.Pos.GetPositionX());
         data.WriteFloat(movementInfo.Pos.GetPositionY());
         data.WriteFloat(movementInfo.Pos.GetPositionZ());
@@ -224,39 +197,21 @@ public static class PacketHandlerExtensions
         uint moveIndex = 0;
         data.WriteUInt32(moveIndex);
 
-        /*for (public uint i = 0; i < removeMovementForcesCount; ++i)
-        {
-            _worldPacket << ObjectGuid;
-        }*/
+        data.WriteBits((uint)movementInfo.GetMovementFlags(), 30);
+        uint flagsExtra = (uint)movementInfo.GetMovementFlags2();
+        if (flagsExtra == 0)
+            flagsExtra = 512;
+        data.WriteBits(flagsExtra, 18);
 
-        data.WriteBit(hasStandingOnGameObjectGUID);
         data.WriteBit(hasTransportData);
         data.WriteBit(hasFallData);
         data.WriteBit(hasSpline);
         data.WriteBit(false); // HeightChangeFailed
         data.WriteBit(false); // RemoteTimeValid
-        data.WriteBit(hasInertia);
-        data.WriteBit(hasAdvFlying);
         data.FlushBits();
 
         if (hasTransportData)
             movementInfo.transport.Write(data);
-
-        if (hasStandingOnGameObjectGUID)
-            data.WritePackedGuid(movementInfo.standingOnGameObjectGUID.Value);
-
-        if (hasInertia)
-        {
-            data.WriteInt32(movementInfo.inertia.Value.id);
-            data.WriteXYZ(movementInfo.inertia.Value.force);
-            data.WriteUInt32(movementInfo.inertia.Value.lifetime);
-        }
-
-        if (hasAdvFlying)
-        {
-            data.WriteFloat(movementInfo.advFlying.Value.forwardVelocity);
-            data.WriteFloat(movementInfo.advFlying.Value.upVelocity);
-        }
 
         if (hasFallData)
         {
@@ -307,7 +262,6 @@ public static class PacketHandlerExtensions
                 data.WriteBit(moveSpline.splineflags.HasFlag(SplineFlag.Parabolic) 
                 && (moveSpline.spell_effect_extra == null || moveSpline.effect_start_time != 0));
 
-            data.WriteBit(moveSpline.anim_tier != null);                   // HasAnimTierTransition
             data.FlushBits();
 
             switch (moveSpline.facing.type)
@@ -342,14 +296,6 @@ public static class PacketHandlerExtensions
                 data.WriteFloat(moveSpline.vertical_acceleration);
                 data.WriteInt32(moveSpline.effect_start_time);
                 data.WriteUInt32(0);                                                  // Duration (override)
-            }
-
-            if (moveSpline.anim_tier != null)
-            {
-                data.WriteInt32(moveSpline.anim_tier.TierTransitionId);
-                data.WriteInt32(moveSpline.effect_start_time);
-                data.WriteInt32(0);
-                data.WriteUInt8(moveSpline.anim_tier.AnimTier);
             }
         }
     }

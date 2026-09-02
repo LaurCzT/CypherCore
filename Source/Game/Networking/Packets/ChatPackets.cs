@@ -216,15 +216,22 @@ namespace Game.Networking.Packets
             _worldPacket.WritePackedGuid(TargetGUID);
             _worldPacket.WriteUInt32(TargetVirtualAddress);
             _worldPacket.WriteUInt32(SenderVirtualAddress);
+            // 1.14.0 carries a PartyGUID here, and has no SpellID field at all.
+            // Verified against two independent references that agree exactly:
+            // HermesProxy ChatPackets.cs ChatPkt.Write, and vmangos_1.14
+            // WorldSocket.cpp:1287 ("PartyGUID") / :1297 (ChatFlags as 14 bits).
+            // Omitting PartyGUID and writing a spurious SpellID shifted everything
+            // after it, so the string-length bit block was read from the wrong
+            // offset and the client dropped the message.
+            _worldPacket.WritePackedGuid(PartyGUID);
             _worldPacket.WriteInt32(AchievementID);
             _worldPacket.WriteFloat(DisplayTime);
-            _worldPacket.WriteInt32(SpellID);
             _worldPacket.WriteBits(SenderName.GetByteCount(), 11);
             _worldPacket.WriteBits(TargetName.GetByteCount(), 11);
             _worldPacket.WriteBits(Prefix.GetByteCount(), 5);
             _worldPacket.WriteBits(Channel.GetByteCount(), 7);
             _worldPacket.WriteBits(ChatText.GetByteCount(), 12);
-            _worldPacket.WriteBits((ushort)_ChatFlags, 15);
+            _worldPacket.WriteBits((ushort)_ChatFlags, 14);   // 14 bits in 1.14.0, not 15
             _worldPacket.WriteBit(HideChatLog);
             _worldPacket.WriteBit(FakeSenderName);
             _worldPacket.WriteBit(Unused_801.HasValue);
@@ -250,6 +257,7 @@ namespace Game.Networking.Packets
         public ObjectGuid SenderGuildGUID;
         public ObjectGuid SenderAccountGUID;
         public ObjectGuid TargetGUID;
+        public ObjectGuid PartyGUID;
         public uint SenderVirtualAddress;
         public uint TargetVirtualAddress;
         public string SenderName = string.Empty;

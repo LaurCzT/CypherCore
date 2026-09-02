@@ -202,8 +202,10 @@ namespace Game.Entities
             else
                 BuildCreateUpdateBlockForPlayer(upd, player);
 
-            upd.BuildPacket(out packet);
-            player.SendPacket(packet);
+            List<UpdateObject> packets;
+            upd.BuildPackets(out packets);
+            foreach (var pkt in packets)
+                player.SendPacket(pkt);
         }
 
         public void BuildValuesUpdateBlockForPlayer(UpdateData data, Player target)
@@ -223,13 +225,8 @@ namespace Game.Entities
 
         public void BuildValuesUpdateBlockForPlayerWithFlag(UpdateData data, UpdateFieldFlag flags, Player target)
         {
-            WorldPacket buffer = new();
-            buffer.WriteUInt8((byte)UpdateType.Values);
-            buffer.WritePackedGuid(GetGUID());
-
-            BuildValuesUpdateWithFlag(buffer, flags, target);
-
-            data.AddUpdateBlock(buffer);
+            // Always use 1.14.0 update fields adapter
+            Game.Networking.Adapters.V1_14_0.UpdateObjectBuilder1140.BuildValuesUpdateBlockForPlayer(data, this, target);
         }
 
         public void BuildDestroyUpdateBlock(UpdateData data)
@@ -246,9 +243,10 @@ namespace Game.Entities
         {
             UpdateData updateData = new(target.GetMapId());
             BuildDestroyUpdateBlock(updateData);
-            UpdateObject packet;
-            updateData.BuildPacket(out packet);
-            target.SendPacket(packet);
+            List<UpdateObject> packets;
+            updateData.BuildPackets(out packets);
+            foreach (var pkt in packets)
+                target.SendPacket(pkt);
         }
 
         public void SendOutOfRangeForPlayer(Player target)
@@ -257,8 +255,10 @@ namespace Game.Entities
 
             UpdateData updateData = new(target.GetMapId());
             BuildOutOfRangeUpdateBlock(updateData);
-            updateData.BuildPacket(out UpdateObject packet);
-            target.SendPacket(packet);
+            List<UpdateObject> packets;
+            updateData.BuildPackets(out packets);
+            foreach (var pkt in packets)
+                target.SendPacket(pkt);
         }
 
         public void BuildMovementUpdate(WorldPacket data, CreateObjectBits flags, Player target)
@@ -1064,6 +1064,9 @@ namespace Game.Entities
 
         public int GetZoneId() { return m_zoneId; }
         public int GetAreaId() { return m_areaId; }
+
+        public void SetZoneId(int zoneId) { m_zoneId = zoneId; }
+        public void SetAreaId(int areaId) { m_areaId = areaId; }
 
         public void GetZoneAndAreaId(out int zoneid, out int areaid) { zoneid = m_zoneId; areaid = m_areaId; }
 

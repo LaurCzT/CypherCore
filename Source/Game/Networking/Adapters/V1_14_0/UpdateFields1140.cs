@@ -168,7 +168,6 @@ namespace Game.Networking.Adapters.V1_14_0
         UNIT_FIELD_STATE_ANIM_KIT_ID                                = ObjectField.OBJECT_END + 0x0C3, // Size: 1, Flags: DYNAMIC, URGENT
         UNIT_FIELD_STATE_WORLD_EFFECT_ID                            = ObjectField.OBJECT_END + 0x0C4, // Size: 4, Flags: DYNAMIC, URGENT
         UNIT_FIELD_SCALE_DURATION                                   = ObjectField.OBJECT_END + 0x0C8, // Size: 1, Flags: PUBLIC
-        UNIT_FIELD_LOOKS_LIKE_MOUNT_ID                              = ObjectField.OBJECT_END + 0x0C9, // Size: 1, Flags: PUBLIC
         UNIT_FIELD_LOOKS_LIKE_CREATURE_ID                           = ObjectField.OBJECT_END + 0x0CA, // Size: 1, Flags: PUBLIC
         UNIT_FIELD_LOOK_AT_CONTROLLER_ID                            = ObjectField.OBJECT_END + 0x0CB, // Size: 1, Flags: PUBLIC
         UNIT_FIELD_GUILD_GUID                                       = ObjectField.OBJECT_END + 0x0CC, // Size: 4, Flags: PUBLIC

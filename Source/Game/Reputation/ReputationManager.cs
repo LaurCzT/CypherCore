@@ -332,8 +332,11 @@ namespace Game
 
             foreach (var pair in _factions)
             {
-                initFactions.FactionFlags[pair.Key] = pair.Value.Flags;
-                initFactions.FactionStandings[pair.Key] = pair.Value.Standing;
+                if (pair.Key < InitializeFactions.FactionCount)
+                {
+                    initFactions.FactionFlags[pair.Key] = pair.Value.Flags;
+                    initFactions.FactionStandings[pair.Key] = pair.Value.Standing;
+                }
                 // @todo faction bonus
                 pair.Value.needSend = false;
             }

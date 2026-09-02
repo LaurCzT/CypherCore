@@ -8,7 +8,7 @@ namespace Game.Networking.Packets
 {
     public class InitializeFactions : ServerPacket
     {
-        const ushort FactionCount = 1000;
+        public const ushort FactionCount = 400;
 
         public InitializeFactions() : base(ServerOpcodes.InitializeFactions, ConnectionType.Instance) { }
 
@@ -16,7 +16,7 @@ namespace Game.Networking.Packets
         {
             for (ushort i = 0; i < FactionCount; ++i)
             {
-                _worldPacket.WriteUInt16((ushort)((ushort)FactionFlags[i] & 0xFF));
+                _worldPacket.WriteUInt8((byte)((ushort)FactionFlags[i] & 0xFF));
                 _worldPacket.WriteInt32(FactionStandings[i]);
             }
 

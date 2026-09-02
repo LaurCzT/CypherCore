@@ -1767,8 +1767,11 @@ namespace Game.Maps
                 }
             }
             UpdateObject packet;
-            data.BuildPacket(out packet);
-            player.SendPacket(packet);
+            // Build potentially multiple UpdateObject packets if data is large
+            List<Game.Networking.Packets.UpdateObject> packets;
+            data.BuildPackets(out packets);
+            foreach (var pkt in packets)
+                player.SendPacket(pkt);
         }
 
         void SendInitTransports(Player player)
@@ -1784,9 +1787,10 @@ namespace Game.Maps
                 }
             }
 
-            UpdateObject packet;
-            transData.BuildPacket(out packet);
-            player.SendPacket(packet);
+            List<Game.Networking.Packets.UpdateObject> packets;
+            transData.BuildPackets(out packets);
+            foreach (var pkt in packets)
+                player.SendPacket(pkt);
         }
 
         void SendRemoveTransports(Player player)
@@ -1801,9 +1805,10 @@ namespace Game.Maps
                 }
             }
 
-            UpdateObject packet;
-            transData.BuildPacket(out packet);
-            player.SendPacket(packet);
+            List<Game.Networking.Packets.UpdateObject> packets;
+            transData.BuildPackets(out packets);
+            foreach (var pkt in packets)
+                player.SendPacket(pkt);
         }
 
         public void SendUpdateTransportVisibility(Player player)
@@ -1831,9 +1836,10 @@ namespace Game.Maps
                 }
             }
 
-            UpdateObject packet;
-            transData.BuildPacket(out packet);
-            player.SendPacket(packet);
+            List<Game.Networking.Packets.UpdateObject> packets;
+            transData.BuildPackets(out packets);
+            foreach (var pkt in packets)
+                player.SendPacket(pkt);
         }
 
         void SetGrid(Grid grid, int x, int y)
@@ -1859,11 +1865,12 @@ namespace Game.Maps
                 obj.BuildUpdate(update_players);
             }
 
-            UpdateObject packet;
             foreach (var iter in update_players)
             {
-                iter.Value.BuildPacket(out packet);
-                iter.Key.SendPacket(packet);
+                List<Game.Networking.Packets.UpdateObject> packets;
+                iter.Value.BuildPackets(out packets);
+                foreach (var pkt in packets)
+                    iter.Key.SendPacket(pkt);
             }
         }
 

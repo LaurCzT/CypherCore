@@ -16,7 +16,6 @@ namespace Game.Networking.Packets
         public override void Write()
         {
             _worldPacket.WriteInt32(MythicPlusDisplaySeasonID);
-            _worldPacket.WriteInt32(MythicPlusMilestoneSeasonID);
             _worldPacket.WriteInt32(CurrentArenaSeason);
             _worldPacket.WriteInt32(PreviousArenaSeason);
             _worldPacket.WriteInt32(ConquestWeeklyProgressCurrencyID);
@@ -26,7 +25,6 @@ namespace Game.Networking.Packets
         }
 
         public int MythicPlusDisplaySeasonID;
-        public int MythicPlusMilestoneSeasonID;
         public int PreviousArenaSeason;
         public int CurrentArenaSeason;
         public int PvpSeasonID;

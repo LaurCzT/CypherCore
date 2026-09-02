@@ -54,20 +54,12 @@ namespace Game.Networking.Packets
             _worldPacket.WritePackedGuid(GossipGUID);
             _worldPacket.WriteInt32(GossipID);
             _worldPacket.WriteInt32(FriendshipFactionID);
+            _worldPacket.WriteInt32(TextID.GetValueOrDefault());
             _worldPacket.WriteInt32(GossipOptions.Count);
             _worldPacket.WriteInt32(GossipText.Count);
-            _worldPacket.WriteBit(TextID.HasValue);
-            _worldPacket.WriteBit(BroadcastTextID.HasValue);
-            _worldPacket.FlushBits();
 
             foreach (ClientGossipOptions options in GossipOptions)
                 options.Write(_worldPacket);
-
-            if (TextID.HasValue)
-                _worldPacket.WriteInt32(TextID.Value);
-
-            if (BroadcastTextID.HasValue)
-                _worldPacket.WriteInt32(BroadcastTextID.Value);
 
             foreach (ClientGossipText text in GossipText)
                 text.Write(_worldPacket);
@@ -352,14 +344,11 @@ namespace Game.Networking.Packets
             data.WriteUInt8((byte)OptionNPC);
             data.WriteInt8((sbyte)OptionFlags);
             data.WriteInt32(OptionCost);
-            data.WriteInt32(OptionLanguage);
-            data.WriteInt32((int)Flags);
-            data.WriteInt32(OrderIndex);
+
             data.WriteBits(Text.GetByteCount(), 12);
             data.WriteBits(Confirm.GetByteCount(), 12);
             data.WriteBits((byte)Status, 2);
             data.WriteBit(SpellID.HasValue);
-            data.WriteBit(OverrideIconID.HasValue);
             data.FlushBits();
 
             Treasure.Write(data);
@@ -369,9 +358,6 @@ namespace Game.Networking.Packets
 
             if (SpellID.HasValue)
                 data.WriteInt32(SpellID.Value);
-
-            if (OverrideIconID.HasValue)
-                data.WriteInt32(OverrideIconID.Value);
         }
     }
 
@@ -388,7 +374,6 @@ namespace Game.Networking.Packets
             data.WriteUInt32((uint)QuestFlagsEx);
 
             data.WriteBit(Repeatable);
-            data.WriteBit(Important);
             data.WriteBits(QuestTitle.GetByteCount(), 9);
             data.FlushBits();
 
@@ -399,11 +384,11 @@ namespace Game.Networking.Packets
         public int ContentTuningID;
         public int QuestType;
         public int QuestLevel;
-        public int QuestMaxScalingLevel;
+        public int QuestMaxScalingLevel = 255;
         public bool Repeatable;
         public bool Important;
         public string QuestTitle;
-        public QuestFlags QuestFlags;
+        public QuestFlags QuestFlags = (QuestFlags)8;
         public QuestFlagsEx QuestFlagsEx;
     }
 
@@ -411,20 +396,18 @@ namespace Game.Networking.Packets
     {
         public void Write(WorldPacket data)
         {
-            data.WriteUInt64(Price);
             data.WriteInt32(MuID);
             data.WriteInt32(Type);
+            data.WriteInt32(Quantity);
+            data.WriteUInt64(Price);
             data.WriteInt32(Durability);
             data.WriteInt32(StackCount);
-            data.WriteInt32(Quantity);
             data.WriteInt32(ExtendedCostID);
             data.WriteInt32(PlayerConditionFailed);
-            data.WriteBit(Locked);
+            Item.Write(data);
             data.WriteBit(DoNotFilterOnVendor);
             data.WriteBit(Refundable);
             data.FlushBits();
-            
-            Item.Write(data);
         }
 
         public int MuID;

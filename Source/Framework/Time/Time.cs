@@ -1,4 +1,4 @@
-﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using System;
@@ -505,12 +505,16 @@ public class IntervalTimer
 
     public bool Passed()
     {
+        if (_interval == TimeSpan.Zero)
+            return false;
         return _current >= _interval;
     }
 
     public void Reset()
     {
-        if (_current >= _interval)
+        if (_interval == TimeSpan.Zero)
+            _current = TimeSpan.Zero;
+        else if (_current >= _interval)
             _current = new(_current.Ticks % _interval.Ticks);
     }
 

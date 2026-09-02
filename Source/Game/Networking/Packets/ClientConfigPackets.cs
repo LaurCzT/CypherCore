@@ -21,7 +21,7 @@ namespace Game.Networking.Packets
 
         public ObjectGuid PlayerGuid;
         public UnixTime64 ServerTime;
-        public long[] AccountTimes = new long[(int)AccountDataTypes.Max];
+        public long[] AccountTimes;
     }
 
     public class ClientCacheVersion : ServerPacket

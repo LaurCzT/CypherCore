@@ -38,18 +38,11 @@ namespace Game.Networking.Packets
             _worldPacket.WriteUInt32(ClubsPresenceUpdateTimer);
             _worldPacket.WriteUInt32(HiddenUIClubsPresenceUpdateTimer);
 
-            _worldPacket.WriteInt32(ActiveSeason);
-            _worldPacket.WriteInt32(GameRuleValues.Count);
-
-            _worldPacket.WriteInt16(MaxPlayerNameQueriesPerPacket);
-            _worldPacket.WriteInt16(PlayerNameQueryTelemetryInterval);
-            _worldPacket.WriteUInt32((uint)PlayerNameQueryInterval.TotalSeconds);
-
-            foreach (GameRuleValuePair gameRuleValue in GameRuleValues)
-                gameRuleValue.Write(_worldPacket);
+            // 1.14.0 client: NO ActiveSeason, GameRuleValues, or PlayerNameQuery parameters.
 
             _worldPacket.WriteBit(VoiceEnabled);
             _worldPacket.WriteBit(EuropaTicketSystemStatus.HasValue);
+            _worldPacket.WriteBit(false); // ScrollOfResurrectionEnabled
             _worldPacket.WriteBit(BpayStoreEnabled);
             _worldPacket.WriteBit(BpayStoreAvailable);
             _worldPacket.WriteBit(BpayStoreDisabledByParentalControls);
@@ -82,19 +75,11 @@ namespace Game.Networking.Packets
             _worldPacket.WriteBit(ClubFinderEnabled);
             _worldPacket.WriteBit(Unknown901CheckoutRelated);
 
-            _worldPacket.WriteBit(TextToSpeechFeatureEnabled);
-            _worldPacket.WriteBit(ChatDisabledByDefault);
-            _worldPacket.WriteBit(ChatDisabledByPlayer);
-            _worldPacket.WriteBit(LFGListCustomRequiresAuthenticator);
-            _worldPacket.WriteBit(AddonsDisabled);
-            _worldPacket.WriteBit(WarGamesEnabled);
-            _worldPacket.WriteBit(ContentTrackingEnabled);
+            // 1.14.0 client: NO TextToSpeechFeatureEnabled, ChatDisabledByDefault, ChatDisabledByPlayer, LFGListCustomRequiresAuthenticator.
 
-            _worldPacket.WriteBit(IsSellAllJunkEnabled);
-            _worldPacket.WriteBit(IsGroupFinderEnabled);
-            _worldPacket.WriteBit(IsLFDEnabled);
-            _worldPacket.WriteBit(IsLFREnabled);
-            _worldPacket.WriteBit(IsPremadeGroupEnabled);
+            // Classic version build:
+            _worldPacket.WriteBit(true); // BattlegroundsEnabled
+            _worldPacket.WriteBit(false); // RaceClassExpansionLevels != null
 
             _worldPacket.FlushBits();
 
@@ -271,29 +256,14 @@ namespace Game.Networking.Packets
 
             _worldPacket.WriteBit(KioskModeEnabled);
             _worldPacket.WriteBit(CompetitiveModeEnabled);
-            _worldPacket.WriteBit(false); // unused, 10.0.2
             _worldPacket.WriteBit(TrialBoostEnabled);
             _worldPacket.WriteBit(TokenBalanceEnabled);
             _worldPacket.WriteBit(LiveRegionCharacterListEnabled);
             _worldPacket.WriteBit(LiveRegionCharacterCopyEnabled);
             _worldPacket.WriteBit(LiveRegionAccountCopyEnabled);
-
             _worldPacket.WriteBit(LiveRegionKeyBindingsCopyEnabled);
             _worldPacket.WriteBit(Unknown901CheckoutRelated);
-            _worldPacket.WriteBit(false); // unused, 10.0.2
             _worldPacket.WriteBit(EuropaTicketSystemStatus.HasValue);
-            _worldPacket.WriteBit(false); // unused, 10.0.2
-            _worldPacket.WriteBit(LaunchETA.HasValue);
-            _worldPacket.WriteBit(AddonsDisabled);
-            _worldPacket.WriteBit(Unused1000);
-
-            _worldPacket.WriteBit(AccountSaveDataExportEnabled);
-            _worldPacket.WriteBit(AccountLockedByExport);
-            _worldPacket.WriteBit(!RealmHiddenAlert.IsEmpty());
-
-            if (!RealmHiddenAlert.IsEmpty())
-                _worldPacket.WriteBits(RealmHiddenAlert.GetByteCount() + 1, 11);
-
             _worldPacket.FlushBits();
 
             if (EuropaTicketSystemStatus.HasValue)
@@ -309,28 +279,11 @@ namespace Game.Networking.Packets
             _worldPacket.WriteInt32(ActiveClassTrialBoostType);
             _worldPacket.WriteInt32((int)MinimumExpansionLevel);
             _worldPacket.WriteInt32((int)MaximumExpansionLevel);
-            _worldPacket.WriteInt32(ActiveSeason);
-            _worldPacket.WriteInt32(GameRuleValues.Count);
-            _worldPacket.WriteInt16(MaxPlayerNameQueriesPerPacket);
-            _worldPacket.WriteInt16(PlayerNameQueryTelemetryInterval);
-            _worldPacket.WriteUInt32((uint)PlayerNameQueryInterval.TotalSeconds);
-            _worldPacket.WriteInt32(DebugTimeEvents.Count);
-            _worldPacket.WriteInt32(Unused1007);
 
-            if (LaunchETA.HasValue)
-                _worldPacket.WriteInt32(LaunchETA.Value);
-
-            if (!RealmHiddenAlert.IsEmpty())
-                _worldPacket.WriteCString(RealmHiddenAlert);
+            // 1.14.0 client: NO ActiveSeason, GameRuleValues, name query limits.
 
             foreach (var sourceRegion in LiveRegionCharacterCopySourceRegions)
                 _worldPacket.WriteInt32(sourceRegion);
-
-            foreach (GameRuleValuePair gameRuleValue in GameRuleValues)
-                gameRuleValue.Write(_worldPacket);
-
-            foreach (DebugTimeEventInfo debugTimeEventInfo in DebugTimeEvents)
-                debugTimeEventInfo.Write(_worldPacket);
         }
 
         public bool BpayStoreAvailable;                 // NYI
@@ -384,12 +337,8 @@ namespace Game.Networking.Packets
         {
             _worldPacket.WriteBits(ServerTimeTZ.GetByteCount(), 7);
             _worldPacket.WriteBits(GameTimeTZ.GetByteCount(), 7);
-            _worldPacket.WriteBits(ServerRegionalTZ.GetByteCount(), 7);
-            _worldPacket.FlushBits();
-
             _worldPacket.WriteString(ServerTimeTZ);
             _worldPacket.WriteString(GameTimeTZ);
-            _worldPacket.WriteString(ServerRegionalTZ);
         }
 
         public string ServerTimeTZ;

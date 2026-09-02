@@ -55,6 +55,7 @@ namespace Game.Networking
 
                 // Set TCP_NODELAY.
                 sock.NoDelay = _tcpNoDelay;
+                Log.outInfo(LogFilter.Network, $"WorldSocketManager.OnSocketOpen: accepted connection from {sock.RemoteEndPoint}");
             }
             catch (SocketException ex)
             {

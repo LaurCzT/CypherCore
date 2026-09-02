@@ -14,7 +14,7 @@ namespace Game.Networking
     {
         public static void Initialize()
         {
-            Assembly currentAsm = Assembly.GetExecutingAssembly();
+            Assembly currentAsm = typeof(PacketManager).Assembly;
             foreach (var type in currentAsm.GetTypes())
             {
                 foreach (var methodInfo in type.GetMethods(BindingFlags.Instance | BindingFlags.NonPublic))

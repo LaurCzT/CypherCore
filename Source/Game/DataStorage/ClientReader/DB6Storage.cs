@@ -464,7 +464,7 @@ namespace Game.DataStorage
 
         public uint GetTableHash() { return _header.TableHash; }
 
-        public int GetNumRows() { return ConvertKey(Keys.Max()) + 1; }
+        public int GetNumRows() { return Keys.Count > 0 ? ConvertKey(Keys.Max()) + 1 : 0; }
 
         public string GetName()
         {

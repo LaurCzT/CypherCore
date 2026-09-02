@@ -128,6 +128,12 @@ namespace Game.Movement
                     // can we get to the target?
                     if (cOwner != null && !target.IsInAccessiblePlaceFor(cOwner))
                     {
+                        Log.outDebug(LogFilter.Unit,
+                            $"Chase: target NOT IN ACCESSIBLE PLACE for creature {cOwner.GetEntry()} " +
+                            $"(guid {cOwner.GetGUID()}). targetInWater={target.IsInWater()} " +
+                            $"canWalk={cOwner.CanWalk()} canFly={cOwner.CanFly()} " +
+                            $"canEnterWater={cOwner.CanEnterWater()} " +
+                            $"targetPos={target.GetPosition()} ownerPos={owner.GetPosition()}");
                         cOwner.SetCannotReachTarget(true);
                         cOwner.StopMoving();
                         _path = null;
@@ -164,7 +170,15 @@ namespace Game.Movement
                     if (!success || _path.GetPathType().HasAnyFlag(PathType.NoPath))
                     {
                         if (cOwner != null)
+                        {
+                            Log.outDebug(LogFilter.Unit,
+                                $"Chase: PATHFINDING FAILED for creature {cOwner.GetEntry()} " +
+                                $"(guid {cOwner.GetGUID()}). success={success} " +
+                                $"pathType={_path.GetPathType()} map={owner.GetMapId()} " +
+                                $"from={owner.GetPosition()} to=({x},{y},{z}) " +
+                                $"targetPos={target.GetPosition()}");
                             cOwner.SetCannotReachTarget(true);
+                        }
 
                         owner.StopMoving();
                         return true;

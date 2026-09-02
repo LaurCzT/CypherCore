@@ -158,7 +158,7 @@ namespace Game.Networking.Packets
 
     public class PowerUpdate : ServerPacket
     {
-        public PowerUpdate() : base(ServerOpcodes.PowerUpdate)
+        public PowerUpdate() : base(ServerOpcodes.PowerUpdate, ConnectionType.Instance)
         {
             Powers = new List<PowerUpdatePower>();
         }
@@ -221,7 +221,7 @@ namespace Game.Networking.Packets
 
     public class HealthUpdate : ServerPacket
     {
-        public HealthUpdate() : base(ServerOpcodes.HealthUpdate) { }
+        public HealthUpdate() : base(ServerOpcodes.HealthUpdate, ConnectionType.Instance) { }
 
         public override void Write()
         {

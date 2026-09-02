@@ -771,6 +771,8 @@ namespace Game
             DB.Characters.CommitTransaction(trans);
         }
 
+
+
         [WorldPacketHandler(ClientOpcodes.PlayerLogin, Status = SessionStatus.Authed)]
         void HandlePlayerLogin(PlayerLogin playerLogin)
         {
@@ -819,6 +821,8 @@ namespace Game
         {
             ObjectGuid playerGuid = holder.GetGuid();
 
+
+
             Player pCurrChar = new(this);
             if (!pCurrChar.LoadFromDB(playerGuid, holder))
             {
@@ -841,6 +845,26 @@ namespace Game
             loginVerifyWorld.Pos = pCurrChar.GetPosition();
             SendPacket(loginVerifyWorld);
 
+            WorldServerInfo worldServerInfo = new();
+            var mapDifficulty = pCurrChar.GetMap().GetMapDifficulty();
+            if (mapDifficulty != null)
+                worldServerInfo.InstanceGroupSize = mapDifficulty.MaxPlayers;
+            
+            worldServerInfo.IsTournamentRealm = false;
+            worldServerInfo.RestrictedAccountMaxLevel = null;
+            worldServerInfo.RestrictedAccountMaxMoney = null;
+            worldServerInfo.DifficultyID = pCurrChar.GetMap().GetDifficultyID();
+            SendPacket(worldServerInfo);
+
+            SetAllTaskProgress tasks = new();
+            SendPacket(tasks);
+
+            InitialSetup initialSetup = new();
+            initialSetup.ServerExpansionLevel = (Expansion)0; // Classic Era
+            SendPacket(initialSetup);
+
+            SendLoadCUFProfiles();
+
             // load player specific part before send times
             LoadAccountData(holder.GetResult(PlayerLoginQueryLoad.AccountData), AccountDataTypeMask.PerCharacterCacheMask);
 
@@ -853,17 +877,7 @@ namespace Game
 
             SendSetTimeZoneInformation();
 
-            // Send PVPSeason
-            {
-                SeasonInfo seasonInfo = new();
-                seasonInfo.PreviousArenaSeason = WorldConfig.Values[WorldCfg.ArenaSeasonId].Int32 
-                    - (WorldConfig.Values[WorldCfg.ArenaSeasonInProgress].Bool ? 1 : 0);
-
-                if (WorldConfig.Values[WorldCfg.ArenaSeasonInProgress].Bool)
-                    seasonInfo.CurrentArenaSeason = WorldConfig.Values[WorldCfg.ArenaSeasonId].Int32;
-
-                SendPacket(seasonInfo);
-            }
+            // SeasonInfo (retail / arena season packet with invalid opcode 0xBADD) is suppressed for 1.14 Classic Era
 
             SQLResult resultGuild = holder.GetResult(PlayerLoginQueryLoad.Guild);
             if (!resultGuild.IsEmpty())
@@ -884,33 +898,12 @@ namespace Game
 
             pCurrChar.SendInitialPacketsBeforeAddToMap();
 
-            //Show cinematic at the first time that player login
+            // Suppress intro cinematics for 1.14 client compatibility.
+            // As documented in vmangos_1.14, sending cinematic start packets to 1.14 client
+            // causes it to disconnect or hang on loading.
             if (pCurrChar.GetCinematic() == 0)
             {
                 pCurrChar.SetCinematic(1);
-                var playerInfo = Global.ObjectMgr.GetPlayerInfo(pCurrChar.GetRace(), pCurrChar.GetClass());
-                if (playerInfo != null)
-                {
-                    switch (pCurrChar.GetCreateMode())
-                    {
-                        case PlayerCreateMode.Normal:
-                            if (playerInfo.introMovieId.HasValue)
-                                pCurrChar.SendMovieStart(playerInfo.introMovieId.Value);
-                            else if (playerInfo.introSceneId.HasValue)
-                                pCurrChar.GetSceneMgr().PlayScene(playerInfo.introSceneId.Value);
-                            else if (CliDB.ChrClassesStorage.TryGetValue(pCurrChar.GetClass(), out ChrClassesRecord chrClassesRecord) && chrClassesRecord.CinematicSequenceID != 0)
-                                pCurrChar.SendCinematicStart(chrClassesRecord.CinematicSequenceID);
-                            else if (CliDB.ChrRacesStorage.TryGetValue((int)pCurrChar.GetRace(), out ChrRacesRecord chrRacesRecord) && chrRacesRecord.CinematicSequenceID != 0)
-                                pCurrChar.SendCinematicStart(chrRacesRecord.CinematicSequenceID);
-                            break;
-                        case PlayerCreateMode.NPE:
-                            if (playerInfo.introSceneIdNPE.HasValue)
-                                pCurrChar.GetSceneMgr().PlayScene(playerInfo.introSceneIdNPE.Value);
-                            break;
-                        default:
-                            break;
-                    }
-                }
             }
 
             if (!pCurrChar.GetMap().AddPlayerToMap(pCurrChar))
@@ -922,6 +915,12 @@ namespace Game
                     pCurrChar.TeleportTo(pCurrChar.GetHomebind());
             }
             Global.ObjAccessor.AddObject(pCurrChar);
+
+            // 1.14 client requires SMSG_CONTROL_UPDATE to confirm control of its unit
+            ControlUpdate ctrl = new();
+            ctrl.Guid = pCurrChar.GetGUID();
+            ctrl.On = true;
+            SendPacket(ctrl);
 
             if (pCurrChar.GetGuildId() != 0)
             {
@@ -1159,7 +1158,19 @@ namespace Game
         [WorldPacketHandler(ClientOpcodes.LoadingScreenNotify, Status = SessionStatus.Authed)]
         void HandleLoadScreen(LoadingScreenNotify loadingScreenNotify)
         {
-            // TODO: Do something with this packet
+            if (!loadingScreenNotify.Showing)
+            {
+                Player player = GetPlayer();
+                if (player != null)
+                {
+                    ControlUpdate ctrl = new();
+                    ctrl.Guid = player.GetGUID();
+                    ctrl.On = true;
+                    SendPacket(ctrl);
+
+                    SendTimeSync();
+                }
+            }
         }
 
         public void SendFeatureSystemStatus()

@@ -570,6 +570,8 @@ namespace Game.Entities
 
         public void SendTalentsInfoData()
         {
+            return; // 1.14/1.15: Talent packet is different, don't send WotLK struct to avoid disconnect
+
             UpdateTalentData packet = new();
             var ActiveGroup = GetActiveTalentGroup();
             packet.ActiveGroup = ActiveGroup;

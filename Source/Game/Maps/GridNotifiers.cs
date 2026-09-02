@@ -79,7 +79,66 @@ namespace Game.Maps
             for (var i = 0; i < objs.Count; ++i)
             {
                 WorldObject obj = objs[i];
+                vis_guids.Remove(obj.GetGUID());
+                i_player.UpdateVisibilityOf(obj, i_data, i_visibleNow);
+            }
+        }
 
+        public override void Visit(IReadOnlyList<Creature> objs)
+        {
+            for (var i = 0; i < objs.Count; ++i)
+            {
+                Creature obj = objs[i];
+                vis_guids.Remove(obj.GetGUID());
+                i_player.UpdateVisibilityOf(obj, i_data, i_visibleNow);
+            }
+        }
+
+        public override void Visit(IReadOnlyList<GameObject> objs)
+        {
+            for (var i = 0; i < objs.Count; ++i)
+            {
+                GameObject obj = objs[i];
+                vis_guids.Remove(obj.GetGUID());
+                i_player.UpdateVisibilityOf(obj, i_data, i_visibleNow);
+            }
+        }
+
+        public override void Visit(IReadOnlyList<Player> objs)
+        {
+            for (var i = 0; i < objs.Count; ++i)
+            {
+                Player obj = objs[i];
+                vis_guids.Remove(obj.GetGUID());
+                i_player.UpdateVisibilityOf(obj, i_data, i_visibleNow);
+            }
+        }
+
+        public override void Visit(IReadOnlyList<DynamicObject> objs)
+        {
+            for (var i = 0; i < objs.Count; ++i)
+            {
+                DynamicObject obj = objs[i];
+                vis_guids.Remove(obj.GetGUID());
+                i_player.UpdateVisibilityOf(obj, i_data, i_visibleNow);
+            }
+        }
+
+        public override void Visit(IReadOnlyList<Corpse> objs)
+        {
+            for (var i = 0; i < objs.Count; ++i)
+            {
+                Corpse obj = objs[i];
+                vis_guids.Remove(obj.GetGUID());
+                i_player.UpdateVisibilityOf(obj, i_data, i_visibleNow);
+            }
+        }
+
+        public override void Visit(IReadOnlyList<AreaTrigger> objs)
+        {
+            for (var i = 0; i < objs.Count; ++i)
+            {
+                AreaTrigger obj = objs[i];
                 vis_guids.Remove(obj.GetGUID());
                 i_player.UpdateVisibilityOf(obj, i_data, i_visibleNow);
             }
@@ -212,8 +271,6 @@ namespace Game.Maps
 
         public override void Visit(IReadOnlyList<Player> objs)
         {
-            base.Visit(objs);
-
             for (var i = 0; i < objs.Count; ++i)
             {
                 Player player = objs[i];
@@ -230,8 +287,6 @@ namespace Game.Maps
 
         public override void Visit(IReadOnlyList<Creature> objs)
         {
-            base.Visit(objs);
-
             bool relocated_for_ai = (i_player == i_player.seerView);
 
             for (var i = 0; i < objs.Count; ++i)

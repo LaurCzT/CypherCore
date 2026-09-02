@@ -62,6 +62,10 @@ namespace Game.Networking.Adapters.V1_14_0
         /// </summary>
         static int GetObjectTypeMask(TypeId typeId)
         {
+            // Masks from HermesProxy ObjectTypeMask enum:
+            // Object=0x01, Item=0x02, Container=0x04, Unit=0x08, Player=0x10,
+            // ActivePlayer=0x20, GameObject=0x40, DynamicObject=0x80,
+            // Corpse=0x100, AreaTrigger=0x200, SceneObject=0x400
             int mask = 0x0001; // Object
             switch (typeId)
             {
@@ -75,23 +79,25 @@ namespace Game.Networking.Adapters.V1_14_0
                     mask |= 0x0008;
                     break;
                 case TypeId.Player:
-                case TypeId.ActivePlayer:
                     mask |= 0x0008 | 0x0010;
                     break;
-                case TypeId.GameObject:
-                    mask |= 0x0020;
+                case TypeId.ActivePlayer:
+                    mask |= 0x0008 | 0x0010 | 0x0020;
                     break;
-                case TypeId.DynamicObject:
+                case TypeId.GameObject:
                     mask |= 0x0040;
                     break;
-                case TypeId.Corpse:
+                case TypeId.DynamicObject:
                     mask |= 0x0080;
                     break;
-                case TypeId.AreaTrigger:
+                case TypeId.Corpse:
                     mask |= 0x0100;
                     break;
-                case TypeId.SceneObject:
+                case TypeId.AreaTrigger:
                     mask |= 0x0200;
+                    break;
+                case TypeId.SceneObject:
+                    mask |= 0x0400;
                     break;
             }
             return mask;
@@ -129,7 +135,7 @@ namespace Game.Networking.Adapters.V1_14_0
                 Unit unit = obj.ToUnit();
                 bool HasFallDirection = unit.HasUnitMovementFlag(MovementFlag.Falling);
                 bool HasFall = HasFallDirection || unit.m_movementInfo.jump.fallTime != 0;
-                bool HasSpline = unit.IsSplineEnabled();
+                bool HasSpline = false; // 1.14 reference (vmangos WorldSocket.cpp:7319, 7343) sets HasSpline = false in create block; spline movement is sent via OnMonsterMove
 
                 data.WritePackedGuid(obj.GetGUID());                             // MoverGUID
 
@@ -146,7 +152,10 @@ namespace Game.Networking.Adapters.V1_14_0
                 data.WriteUInt32(0);                                             // MoveIndex
 
                 data.WriteBits((uint)unit.GetUnitMovementFlags(), 30);           // MovementFlags
-                data.WriteBits((uint)unit.GetUnitMovementFlags2(), 18);          // MovementFlags2
+                uint flagsExtra = (uint)unit.GetUnitMovementFlags2();
+                if (flagsExtra == 0)
+                    flagsExtra = 512; // 1.14 reference forces 512 (CanInterpolate) when 0
+                data.WriteBits(flagsExtra, 18);          // MovementFlags2
 
                 data.WriteBit(!unit.m_movementInfo.transport.guid.IsEmpty());    // HasTransport
                 data.WriteBit(HasFall);                                          // HasFall
@@ -171,6 +180,11 @@ namespace Game.Networking.Adapters.V1_14_0
                         data.WriteFloat(unit.m_movementInfo.jump.cosAngle);
                         data.WriteFloat(unit.m_movementInfo.jump.xyspeed);       // Speed
                     }
+                }
+
+                if (HasSpline)
+                {
+                    data.WriteFloat(unit.m_movementInfo.stepUpStartElevation);   // SplineElevation
                 }
 
                 data.WriteFloat(unit.GetSpeed(UnitMoveType.Walk));
@@ -407,7 +421,7 @@ namespace Game.Networking.Adapters.V1_14_0
             {
                 bool hasSceneInstanceIDs = false;
                 bool hasRuneState = false;
-                bool hasActionButtons = false; // TODO ActionButtons
+                bool hasActionButtons = true; // Enabled ActionButtons support
 
                 data.WriteBit(hasSceneInstanceIDs);
                 data.WriteBit(hasRuneState);
@@ -431,8 +445,11 @@ namespace Game.Networking.Adapters.V1_14_0
 
                 if (hasActionButtons)
                 {
-                    for (int i = 0; i < 132; i++)
-                        data.WriteInt32(0); // ActionButton
+                    for (byte i = 0; i < 132; i++)
+                    {
+                        var ab = target.GetActionButton(i);
+                        data.WriteUInt32(ab != null ? ab.PackedData : 0);
+                    }
                 }
             }
 
@@ -445,6 +462,18 @@ namespace Game.Networking.Adapters.V1_14_0
             }
         }
 
+        private static byte GetModernUpdateType(UpdateType type)
+        {
+            return type switch
+            {
+                UpdateType.Values => 0,
+                UpdateType.CreateObject => 1,
+                UpdateType.CreateObject2 => 2,
+                UpdateType.OutOfRangeObjects => 3, // DestroyObjects in modern
+                _ => 0
+            };
+        }
+
         public static void BuildCreateUpdateBlockForPlayer(UpdateData data, WorldObject obj, Player target, CreateObjectBits flags, UpdateType updateType)
         {
             TypeId typeId = obj.GetTypeId();
@@ -455,7 +484,7 @@ namespace Game.Networking.Adapters.V1_14_0
             uint dynamicFieldCount = GetDynamicFieldCount(typeId);
 
             WorldPacket buffer = new();
-            buffer.WriteUInt8((byte)updateType);
+            buffer.WriteUInt8((byte)(target == obj ? 2 : 1));
             buffer.WritePackedGuid(obj.GetGUID());
             buffer.WriteUInt8(GetClientTypeId1140(typeId));
             buffer.WriteInt32(GetObjectTypeMask(typeId));
@@ -468,7 +497,11 @@ namespace Game.Networking.Adapters.V1_14_0
             UpdateFieldsMapper1140.MapObjectFields(updateArray, obj, target);
             updateArray.WriteToPacket(buffer);
 
-            // Write empty dynamic fields update
+            // Dynamic values mask & data. The block count is derived from the
+            // type's dynamic field count -- hardcoding 1 block is right for
+            // Unit/Player/ActivePlayer/Item/GameObject, but Corpse,
+            // DynamicObject, AreaTrigger and SceneObject have ZERO dynamic
+            // fields and must declare 0 blocks with no mask words at all.
             var dynamicFields = new DynamicUpdateFieldsArray(dynamicFieldCount, updateType);
             dynamicFields.WriteToPacket(buffer);
 
@@ -485,7 +518,7 @@ namespace Game.Networking.Adapters.V1_14_0
             uint dynamicFieldCount = GetDynamicFieldCount(typeId);
 
             WorldPacket buffer = new();
-            buffer.WriteUInt8((byte)UpdateType.Values);
+            buffer.WriteUInt8(GetModernUpdateType(UpdateType.Values));
             buffer.WritePackedGuid(obj.GetGUID());
 
             // For partial updates we also use the flat array; the mask determines what gets sent
@@ -493,7 +526,11 @@ namespace Game.Networking.Adapters.V1_14_0
             UpdateFieldsMapper1140.MapObjectFields(updateArray, obj, target);
             updateArray.WriteToPacket(buffer);
 
-            // Write empty dynamic fields update
+            // Dynamic values mask & data. The block count is derived from the
+            // type's dynamic field count -- hardcoding 1 block is right for
+            // Unit/Player/ActivePlayer/Item/GameObject, but Corpse,
+            // DynamicObject, AreaTrigger and SceneObject have ZERO dynamic
+            // fields and must declare 0 blocks with no mask words at all.
             var dynamicFields = new DynamicUpdateFieldsArray(dynamicFieldCount, UpdateType.Values);
             dynamicFields.WriteToPacket(buffer);
 

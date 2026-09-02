@@ -185,33 +185,27 @@ namespace Game.Networking.Packets
 
             foreach (Record data in Data)
             {
-                _worldPacket.WriteInt32(data.Type);
-                _worldPacket.WriteInt32(data.Quantity);
+                _worldPacket.WriteUInt32(data.Type);
+                _worldPacket.WriteUInt32(data.Quantity);
 
                 _worldPacket.WriteBit(data.WeeklyQuantity.HasValue);
                 _worldPacket.WriteBit(data.MaxWeeklyQuantity.HasValue);
                 _worldPacket.WriteBit(data.TrackedQuantity.HasValue);
                 _worldPacket.WriteBit(data.MaxQuantity.HasValue);
-                _worldPacket.WriteBit(data.TotalEarned.HasValue);
-                _worldPacket.WriteBit(data.NextRechargeTime.HasValue);
-                _worldPacket.WriteBit(data.RechargeCycleStartTime.HasValue);
+                _worldPacket.WriteBit(data.Unused901.HasValue);
                 _worldPacket.WriteBits(data.Flags, 5);
                 _worldPacket.FlushBits();
 
                 if (data.WeeklyQuantity.HasValue)
-                    _worldPacket.WriteInt32(data.WeeklyQuantity.Value);
+                    _worldPacket.WriteUInt32(data.WeeklyQuantity.Value);
                 if (data.MaxWeeklyQuantity.HasValue)
-                    _worldPacket.WriteInt32(data.MaxWeeklyQuantity.Value);
+                    _worldPacket.WriteUInt32(data.MaxWeeklyQuantity.Value);
                 if (data.TrackedQuantity.HasValue)
-                    _worldPacket.WriteInt32(data.TrackedQuantity.Value);
+                    _worldPacket.WriteUInt32(data.TrackedQuantity.Value);
                 if (data.MaxQuantity.HasValue)
                     _worldPacket.WriteInt32(data.MaxQuantity.Value);
-                if (data.TotalEarned.HasValue)
-                    _worldPacket.WriteInt32(data.TotalEarned.Value);
-                if (data.NextRechargeTime.HasValue)
-                    _worldPacket.WriteInt64(data.NextRechargeTime.Value);
-                if (data.RechargeCycleStartTime.HasValue)
-                    _worldPacket.WriteInt64(data.RechargeCycleStartTime.Value);
+                if (data.Unused901.HasValue)
+                    _worldPacket.WriteInt32(data.Unused901.Value);
             }
         }
 
@@ -219,15 +213,13 @@ namespace Game.Networking.Packets
 
         public struct Record
         {
-            public int Type;
-            public int Quantity;
-            public int? WeeklyQuantity;       // Currency count obtained this Week.  
-            public int? MaxWeeklyQuantity;    // Weekly Currency cap.
-            public int? TrackedQuantity;
+            public uint Type;
+            public uint Quantity;
+            public uint? WeeklyQuantity;       // Currency count obtained this Week.  
+            public uint? MaxWeeklyQuantity;    // Weekly Currency cap.
+            public uint? TrackedQuantity;
             public int? MaxQuantity;
-            public int? TotalEarned;
-            public long? NextRechargeTime;
-            public long? RechargeCycleStartTime;
+            public int? Unused901;
             public byte Flags;
         }
     }
@@ -286,16 +278,14 @@ namespace Game.Networking.Packets
 
     public class TriggerCinematic : ServerPacket
     {
-        public TriggerCinematic() : base(ServerOpcodes.TriggerCinematic) { }
+        public TriggerCinematic() : base(ServerOpcodes.TriggerCinematic, ConnectionType.Instance) { }
 
         public override void Write()
         {
             _worldPacket.WriteInt32(CinematicID);
-            _worldPacket.WritePackedGuid(ConversationGuid);
         }
 
         public int CinematicID;
-        public ObjectGuid ConversationGuid;
     }
 
     public class TriggerMovie : ServerPacket
@@ -363,12 +353,13 @@ namespace Game.Networking.Packets
 
         public override void Write()
         {
-            _worldPacket.WriteInt32((int)DifficultyID);
-            _worldPacket.WriteBit(IsTournamentRealm);
+            _worldPacket.WriteUInt32((uint)DifficultyID);
+            _worldPacket.WriteUInt8((byte)(IsTournamentRealm ? 1 : 0));
             _worldPacket.WriteBit(XRealmPvpAlert);
             _worldPacket.WriteBit(RestrictedAccountMaxLevel.HasValue);
             _worldPacket.WriteBit(RestrictedAccountMaxMoney.HasValue);
             _worldPacket.WriteBit(InstanceGroupSize.HasValue);
+            _worldPacket.FlushBits();
 
             if (RestrictedAccountMaxLevel.HasValue)
                 _worldPacket.WriteInt32(RestrictedAccountMaxLevel.Value);
@@ -378,8 +369,6 @@ namespace Game.Networking.Packets
 
             if (InstanceGroupSize.HasValue)
                 _worldPacket.WriteInt32(InstanceGroupSize.Value);
-
-            _worldPacket.FlushBits();
         }
 
         public Difficulty DifficultyID;
@@ -618,6 +607,48 @@ namespace Game.Networking.Packets
         public int Tier;
     }
 
+    public class AllAccountCriteria : ServerPacket
+    {
+        public AllAccountCriteria() : base(ServerOpcodes.AllAccountCriteria, ConnectionType.Instance) { }
+
+        public override void Write()
+        {
+            _worldPacket.WriteInt32(Progress.Count);
+            foreach (var progress in Progress)
+                progress.Write(_worldPacket);
+        }
+
+        public List<CriteriaProgressPkt> Progress = new();
+    }
+
+    public struct CriteriaProgressPkt
+    {
+        public void Write(WorldPacket data)
+        {
+            data.WriteUInt32(Id);
+            data.WriteUInt64(Quantity);
+            data.WritePackedGuid(Player);
+            data.WriteInt32((int)Date);
+            data.WriteUInt32(TimeFromStart);
+            data.WriteUInt32(TimeFromCreate);
+            data.WriteBits(Flags, 4);
+            data.WriteBit(RafAcceptanceID.HasValue);
+            data.FlushBits();
+
+            if (RafAcceptanceID.HasValue)
+                data.WriteUInt32(RafAcceptanceID.Value);
+        }
+
+        public uint Id;
+        public ulong Quantity;
+        public ObjectGuid Player;
+        public long Date;
+        public uint TimeFromStart;
+        public uint TimeFromCreate;
+        public uint Flags;
+        public uint? RafAcceptanceID;
+    }
+
     public class StartMirrorTimer : ServerPacket
     {
         public StartMirrorTimer(MirrorTimerType timer, Milliseconds value, Milliseconds maxValue, int scale, int spellID, bool paused) : base(ServerOpcodes.StartMirrorTimer)
@@ -793,7 +824,7 @@ namespace Game.Networking.Packets
 
     class PhaseShiftChange : ServerPacket
     {
-        public PhaseShiftChange() : base(ServerOpcodes.PhaseShiftChange) { }
+        public PhaseShiftChange() : base(ServerOpcodes.PhaseShiftChange, ConnectionType.Instance) { }
 
         public override void Write()
         {

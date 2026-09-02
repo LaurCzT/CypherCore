@@ -372,13 +372,35 @@ namespace Game.Networking
         {
             if (!IsOpen())
                 return;
-
             packet.LogPacket(_worldSession);
             packet.WritePacketData();
 
             var data = packet.GetData();
             ServerOpcodes opcode = packet.GetOpcode();
             PacketLog.Write(data, (uint)opcode, GetRemoteIpAddress(), _connectType, false);
+
+            try
+            {
+                // Custom logging for debugging the 80% crash
+                string hexData = data != null ? BitConverter.ToString(data).Replace("-", " ") : "EMPTY";
+                string logLine = $"[{System.DateTime.Now:HH:mm:ss.fff}] OPCODE: {opcode} ({(ushort)opcode:X4}) | SIZE: {(data != null ? data.Length : 0)} | DATA: {hexData}\n";
+                System.IO.File.AppendAllText("SentPackets.log", logLine);
+            }
+            catch { }
+
+            // Diagnostic: log packet sizes to help detect floods / huge packets that may freeze the client
+            int initialPacketSize = data != null ? data.Length : 0;
+            Log.outDebug(LogFilter.Network, $"WorldSocket.SendPacket: opcode={(ushort)opcode} initialDataSize={initialPacketSize} conn={_connectType} to={GetRemoteIpAddress()}");
+
+            // Guard: prevent sending absurdly large packets that will cause client memory issues
+            // If such packet occurs, log full details and close the socket to avoid client OOM while we investigate.
+            const int MaxAcceptablePacketSize = 4 * 1024 * 1024; // 4 MB
+            if (initialPacketSize > MaxAcceptablePacketSize)
+            {
+                Log.outError(LogFilter.Network, $"WorldSocket.SendPacket: Prevented sending oversized packet (opcode={(ushort)opcode}, size={initialPacketSize}) to {GetRemoteIpAddress()}");
+                CloseSocket();
+                return;
+            }
 
             ByteBuffer buffer = new();
 
@@ -414,7 +436,16 @@ namespace Game.Networking
             header.Write(byteBuffer);
             byteBuffer.WriteBytes(data);
 
-            AsyncWrite(byteBuffer.GetData());
+            // Diagnostic: log final packet size after compression/encryption to help track client freezes
+            try
+            {
+                Log.outDebug(LogFilter.Network, $"WorldSocket.SendPacket: finalOpcode={(ushort)opcode} finalPacketSize={header.Size} conn={_connectType} to={GetRemoteIpAddress()}");
+            }
+            catch { }
+
+            var outBytes = byteBuffer.GetData();
+
+            AsyncWrite(outBytes);
         }
 
         public void SetWorldSession(WorldSession session)

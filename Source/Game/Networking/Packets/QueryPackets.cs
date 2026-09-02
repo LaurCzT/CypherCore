@@ -137,7 +137,7 @@ namespace Game.Networking.Packets
     
     public class QueryPlayerNameResponse : ServerPacket
     {
-        public QueryPlayerNameResponse() : base(ServerOpcodes.QueryPlayerNameByCommunityIdResponse) { }
+        public QueryPlayerNameResponse() : base(ServerOpcodes.QueryPlayerNameResponse, ConnectionType.Instance) { }
 
         public override void Write()
         {

@@ -87,6 +87,23 @@ namespace Game.Networking
             if (buffer != null)
                 return;
 
+            // Several senders pre-serialise by calling Write() directly, so one packet
+            // object can be handed to many players without re-encoding it per recipient
+            // (ChatPacketSender, MultiplePacketSender, the quest info response, and the
+            // loot / party-kill / world-state builders all do this).
+            //
+            // Write() fills _worldPacket but does NOT publish `buffer`, so this method
+            // used to see buffer == null and call Write() a SECOND time -- appending a
+            // duplicate payload to the same stream. The packet went out at exactly twice
+            // its real length with the tail repeated, e.g. SMSG_CHAT at 108 bytes instead
+            // of 54, and the client discarded it. Publish what is already there instead.
+            if (_worldPacket.GetSize() > 0)
+            {
+                buffer = _worldPacket.GetData();
+                _worldPacket.Dispose();
+                return;
+            }
+
             Write();
 
             buffer = _worldPacket.GetData();

@@ -771,6 +771,35 @@ namespace Game.Networking.Packets
         public Expansion ServerExpansionLevel;
     }
 
+    public class SetAllTaskProgress : ServerPacket
+    {
+        public SetAllTaskProgress() : base(ServerOpcodes.SetAllTaskProgress, ConnectionType.Instance) { }
+
+        public override void Write()
+        {
+            _worldPacket.WriteInt32(Tasks.Count);
+            foreach (var task in Tasks)
+                task.Write(_worldPacket);
+        }
+
+        public List<TaskProgress> Tasks = new();
+    }
+
+    public class TaskProgress
+    {
+        public void Write(WorldPacket data)
+        {
+            data.WriteUInt32(TaskID);
+            data.WriteInt32(CurProgress);
+            data.WriteBit(Completed);
+            data.FlushBits();
+        }
+
+        public uint TaskID;
+        public int CurProgress;
+        public bool Completed;
+    }
+
     public class SetActionBarToggles : ClientPacket
     {
         public SetActionBarToggles(WorldPacket packet) : base(packet) { }

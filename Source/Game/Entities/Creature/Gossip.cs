@@ -278,7 +278,7 @@ namespace Game.Misc
                     ClientGossipText gossipText = new();
                     gossipText.QuestID = questID;
                     gossipText.ContentTuningID = 0;
-                    gossipText.QuestType = item.QuestIcon;
+                    gossipText.QuestType = (item.QuestIcon == 4 || item.QuestIcon == 6) ? 4 : 2;
                     gossipText.QuestLevel = quest.Level;
                     gossipText.QuestMaxScalingLevel = quest.MaxScalingLevel;
                     gossipText.QuestFlags = quest.Flags;
@@ -376,7 +376,7 @@ namespace Game.Misc
                     text.ContentTuningID = 0;
                     text.QuestLevel = quest.Level;
                     text.QuestMaxScalingLevel = quest.MaxScalingLevel;
-                    text.QuestType = questMenuItem.QuestIcon;
+                    text.QuestType = (questMenuItem.QuestIcon == 4 || questMenuItem.QuestIcon == 6) ? 4 : 2;
                     text.QuestFlags = quest.Flags;
                     text.QuestFlagsEx = quest.FlagsEx;
                     text.Repeatable = quest.IsTurnIn() && quest.IsRepeatable() && !quest.IsDailyOrWeekly() && !quest.IsMonthly();
@@ -455,7 +455,6 @@ namespace Game.Misc
             packet.DisplayPopup = displayPopup;
             packet.QuestFlags[0] = (uint)(quest.Flags & (WorldConfig.Values[WorldCfg.QuestIgnoreAutoAccept].Bool ? ~QuestFlags.AutoAccept : ~QuestFlags.None));
             packet.QuestFlags[1] = (uint)quest.FlagsEx;
-            packet.QuestFlags[2] = (uint)quest.FlagsEx2;
             packet.SuggestedPartyMembers = quest.SuggestedPlayers;
 
             // Is there a better way? what about game objects?
@@ -564,7 +563,6 @@ namespace Game.Misc
 
             offer.QuestFlags = quest.Flags;
             offer.QuestFlagsEx = quest.FlagsEx;
-            offer.QuestFlagsEx2 = quest.FlagsEx2;
 
             packet.PortraitTurnIn = quest.QuestTurnInPortrait;
             packet.PortraitGiver = quest.QuestGiverPortrait;

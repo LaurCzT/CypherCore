@@ -270,13 +270,17 @@ namespace Game
             key.Raw = linkInfo.Item2;
 
             WorldSession session = FindSession(key.AccountId);
+            Log.outDebug(LogFilter.Network, $"ProcessLinkInstanceSocket: incoming link key=0x{linkInfo.Item2:X} account={key.AccountId} sessionExists={(session != null)}");
             if (session == null || session.GetConnectToInstanceKey() != linkInfo.Item2)
             {
+                long sessionKey = session != null ? session.GetConnectToInstanceKey() : 0;
+                Log.outError(LogFilter.Network, $"ProcessLinkInstanceSocket: link failed for account={key.AccountId} linkKey=0x{linkInfo.Item2:X} sessionKey=0x{sessionKey:X}");
                 linkInfo.Item1.SendAuthResponseError(BattlenetRpcErrorCode.TimedOut);
                 linkInfo.Item1.CloseSocket();
                 return;
             }
 
+            Log.outInfo(LogFilter.Network, $"ProcessLinkInstanceSocket: linking instance socket for account={key.AccountId} key=0x{linkInfo.Item2:X}");
             linkInfo.Item1.SetWorldSession(session);
             session.AddInstanceConnection(linkInfo.Item1);
             session.HandleContinuePlayerLogin();
@@ -1984,14 +1988,15 @@ namespace Game
 
         public void UpdateSessions(TimeSpan diff)
         {
-            Tuple<WorldSocket, long> linkInfo;
-            while (_linkSocketQueue.TryDequeue(out linkInfo))
-                ProcessLinkInstanceSocket(linkInfo);
-
-            // Add new sessions
+            // First, add new sessions so they are available for instance socket linking
             WorldSession sess;
             while (addSessQueue.TryDequeue(out sess))
                 AddSession_(sess);
+
+            // Then process any pending instance socket links which expect sessions to exist
+            Tuple<WorldSocket, long> linkInfo;
+            while (_linkSocketQueue.TryDequeue(out linkInfo))
+                ProcessLinkInstanceSocket(linkInfo);
 
             // Then send an update signal to remaining ones
             foreach (var pair in m_sessions)
@@ -2512,6 +2517,7 @@ namespace Game
 
         public Realm GetRealm() { return _realm; }
         public RealmId GetRealmId() { return _realm.Id; }
+        public void SetRealm(Realm realm) { _realm = realm; }
 
         public void RemoveOldCorpses()
         {
@@ -2597,7 +2603,7 @@ namespace Game
 
         public Locale GetAvailableDbcLocale(Locale locale)
         {
-            if (m_availableDbcLocaleMask[(int)locale])
+            if (m_availableDbcLocaleMask != null && m_availableDbcLocaleMask[(int)locale])
                 return locale;
             else
                 return m_defaultDbcLocale;
@@ -2654,13 +2660,13 @@ namespace Game
         List<string> m_motd = new();
 
         // scheduled reset times
-        RealmTime m_NextDailyQuestReset;
-        RealmTime m_NextWeeklyQuestReset;
-        RealmTime m_NextMonthlyQuestReset;
-        RealmTime m_NextRandomBGReset;
-        RealmTime m_NextCalendarOldEventsDeletionTime;
-        RealmTime m_NextGuildReset;
-        RealmTime m_NextCurrencyReset;
+        RealmTime m_NextDailyQuestReset = RealmTime.Infinity;
+        RealmTime m_NextWeeklyQuestReset = RealmTime.Infinity;
+        RealmTime m_NextMonthlyQuestReset = RealmTime.Infinity;
+        RealmTime m_NextRandomBGReset = RealmTime.Infinity;
+        RealmTime m_NextCalendarOldEventsDeletionTime = RealmTime.Infinity;
+        RealmTime m_NextGuildReset = RealmTime.Infinity;
+        RealmTime m_NextCurrencyReset = RealmTime.Infinity;
 
         List<WorldSession> m_QueuedPlayer = new();
         ConcurrentQueue<WorldSession> addSessQueue = new();

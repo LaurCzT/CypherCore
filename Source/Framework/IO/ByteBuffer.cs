@@ -273,12 +273,18 @@ namespace Framework.IO
         public void WriteBytes(byte[] data)
         {
             FlushBits();
+            if (data == null || data.Length == 0)
+                return;
+
             writeStream.Write(data, 0, data.Length);
         }
 
         public void WriteBytes(byte[] data, int count)
         {
             FlushBits();
+            if (data == null || count == 0)
+                return;
+
             writeStream.Write(data, 0, count);
         }
 

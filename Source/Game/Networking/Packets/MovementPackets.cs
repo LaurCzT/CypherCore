@@ -544,7 +544,7 @@ namespace Game.Networking.Packets
 
     public class MoveSetActiveMover : ServerPacket
     {
-        public MoveSetActiveMover() : base(ServerOpcodes.MoveSetActiveMover) { }
+        public MoveSetActiveMover() : base(ServerOpcodes.MoveSetActiveMover, ConnectionType.Instance) { }
 
         public override void Write()
         {
@@ -604,7 +604,7 @@ namespace Game.Networking.Packets
 
     class MoveSetCollisionHeight : ServerPacket
     {
-        public MoveSetCollisionHeight() : base(ServerOpcodes.MoveSetCollisionHeight) { }
+        public MoveSetCollisionHeight() : base(ServerOpcodes.MoveSetCollisionHeight, ConnectionType.Instance) { }
 
         public override void Write()
         {
@@ -704,7 +704,7 @@ namespace Game.Networking.Packets
 
     public class ControlUpdate : ServerPacket
     {
-        public ControlUpdate() : base(ServerOpcodes.ControlUpdate) { }
+        public ControlUpdate() : base(ServerOpcodes.ControlUpdate, ConnectionType.Instance) { }
 
         public override void Write()
         {
@@ -1055,7 +1055,6 @@ namespace Game.Networking.Packets
             data.WriteBit(SplineFilter != null);
             data.WriteBit(SpellEffectExtraData.HasValue);
             data.WriteBit(JumpExtraData.HasValue);
-            data.WriteBit(AnimTierTransition.HasValue);
             data.FlushBits();
 
             if (SplineFilter != null)
@@ -1086,9 +1085,6 @@ namespace Game.Networking.Packets
 
             if (JumpExtraData.HasValue)
                 JumpExtraData.Value.Write(data);
-
-            if (AnimTierTransition.HasValue)
-                AnimTierTransition.Value.Write(data);
         }
 
         public uint Flags; // Spline flags

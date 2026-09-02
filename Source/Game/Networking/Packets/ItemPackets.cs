@@ -37,8 +37,13 @@ namespace Game.Networking.Packets
             Quantity = _worldPacket.ReadInt32();
             Muid = _worldPacket.ReadInt32();
             Slot = _worldPacket.ReadInt32();
-            ItemType = (ItemVendorType)_worldPacket.ReadInt32();
+            // 1.14.0: the ItemInstance comes BEFORE ItemType, and ItemType is a
+            // 3-bit field -- not the int32 the retail layout reads. Reading it
+            // retail-style consumed 4 bytes of the ItemInstance and then ran off
+            // the end of the buffer, so every buy request died with an
+            // EndOfStreamException and was skipped.
             Item.Read(_worldPacket);
+            ItemType = (ItemVendorType)_worldPacket.ReadBits<int>(3);
         }
 
         public ObjectGuid VendorGUID;

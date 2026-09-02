@@ -1689,6 +1689,10 @@ namespace Game.Entities
 
         void SendActionButtons(ActionsButtonsUpdateReason state)
         {
+            // 1.14.0: Action buttons are sent in the ActivePlayer object update.
+            // Sending the legacy UpdateActionButtons packet causes client desyncs.
+            return;
+
             UpdateActionButtons packet = new();
 
             foreach (var pair in m_actionButtons)
@@ -5498,18 +5502,19 @@ namespace Game.Entities
             SendKnownSpells();
 
             // SMSG_SEND_UNLEARN_SPELLS
-            SendUnlearnSpells();
+            // SendUnlearnSpells();
 
             // SMSG_SEND_SPELL_HISTORY
-            SendSpellHistory sendSpellHistory = new();
-            GetSpellHistory().WritePacket(sendSpellHistory);
-            SendPacket(sendSpellHistory);
+            // SendSpellHistory sendSpellHistory = new();
+            // GetSpellHistory().WritePacket(sendSpellHistory);
+            // SendPacket(sendSpellHistory);
 
             // SMSG_SEND_SPELL_CHARGES
-            SendSpellCharges sendSpellCharges = new();
-            GetSpellHistory().WritePacket(sendSpellCharges);
-            SendPacket(sendSpellCharges);
+            // SendSpellCharges sendSpellCharges = new();
+            // GetSpellHistory().WritePacket(sendSpellCharges);
+            // SendPacket(sendSpellCharges);
 
+            /*
             ActiveGlyphs activeGlyphs = new();
             foreach (var glyphId in GetGlyphs(GetActiveTalentGroup()))
             {
@@ -5523,6 +5528,8 @@ namespace Game.Entities
 
             activeGlyphs.IsFullUpdate = true;
             SendPacket(activeGlyphs);
+            */
+            SetMovedUnit(this);
 
             // SMSG_ACTION_BUTTONS
             SendInitialActionButtons();
@@ -5533,8 +5540,8 @@ namespace Game.Entities
             // SMSG_SETUP_CURRENCY
             SendCurrencies();
 
-            // SMSG_EQUIPMENT_SET_LIST
-            SendEquipmentSetList();
+            // SMSG_ALL_ACCOUNT_CRITERIA
+            SendPacket(new AllAccountCriteria());
 
 
             // SMSG_LOGIN_SETTIMESPEED
@@ -5548,44 +5555,42 @@ namespace Game.Entities
             SendPacket(loginSetTimeSpeed);
 
             // SMSG_WORLD_SERVER_INFO
-            WorldServerInfo worldServerInfo = new();
-            var mapDifficulty = GetMap().GetMapDifficulty();
-            if (mapDifficulty != null)
-                worldServerInfo.InstanceGroupSize = mapDifficulty.MaxPlayers;
-            
-            worldServerInfo.IsTournamentRealm = false;             // @todo
-            worldServerInfo.RestrictedAccountMaxLevel = null; // @todo
-            worldServerInfo.RestrictedAccountMaxMoney = null; // @todo
-            worldServerInfo.DifficultyID = GetMap().GetDifficultyID();
-            // worldServerInfo.XRealmPvpAlert;  // @todo
-            SendPacket(worldServerInfo);
+            // WorldServerInfo worldServerInfo = new();
+            // var mapDifficulty = GetMap().GetMapDifficulty();
+            // if (mapDifficulty != null)
+            //     worldServerInfo.InstanceGroupSize = mapDifficulty.MaxPlayers;
+            // 
+            // worldServerInfo.IsTournamentRealm = false;             // @todo
+            // worldServerInfo.RestrictedAccountMaxLevel = null; // @todo
+            // worldServerInfo.RestrictedAccountMaxMoney = null; // @todo
+            // worldServerInfo.DifficultyID = GetMap().GetDifficultyID();
+            // // worldServerInfo.XRealmPvpAlert;  // @todo
+            // SendPacket(worldServerInfo);
 
             // Spell modifiers
             SendSpellModifiers();
 
-            // SMSG_ACCOUNT_MOUNT_UPDATE
-            AccountMountUpdate mountUpdate = new();
-            mountUpdate.IsFullUpdate = true;
-            mountUpdate.Mounts = GetSession().GetCollectionMgr().GetAccountMounts();
-            SendPacket(mountUpdate);
+            // SMSG_ACCOUNT_MOUNT_UPDATE - Modern retail collection packets not used in Classic Era / HermesProxy
+            // AccountMountUpdate mountUpdate = new();
+            // mountUpdate.IsFullUpdate = true;
+            // mountUpdate.Mounts = GetSession().GetCollectionMgr().GetAccountMounts();
+            // SendPacket(mountUpdate);
 
             // SMSG_ACCOUNT_TOYS_UPDATE
-            AccountToyUpdate toyUpdate = new();
-            toyUpdate.IsFullUpdate = true;
-            toyUpdate.Toys = GetSession().GetCollectionMgr().GetAccountToys();
-            SendPacket(toyUpdate);
+            // AccountToyUpdate toyUpdate = new();
+            // toyUpdate.IsFullUpdate = true;
+            // toyUpdate.Toys = GetSession().GetCollectionMgr().GetAccountToys();
+            // SendPacket(toyUpdate);
 
             // SMSG_ACCOUNT_HEIRLOOM_UPDATE
-            AccountHeirloomUpdate heirloomUpdate = new();
-            heirloomUpdate.IsFullUpdate = true;
-            heirloomUpdate.Heirlooms = GetSession().GetCollectionMgr().GetAccountHeirlooms();
-            SendPacket(heirloomUpdate);
+            // AccountHeirloomUpdate heirloomUpdate = new();
+            // heirloomUpdate.IsFullUpdate = true;
+            // heirloomUpdate.Heirlooms = GetSession().GetCollectionMgr().GetAccountHeirlooms();
+            // SendPacket(heirloomUpdate);
 
-            GetSession().GetCollectionMgr().SendFavoriteAppearances();
+            // GetSession().GetCollectionMgr().SendFavoriteAppearances();
 
-            InitialSetup initialSetup = new();
-            initialSetup.ServerExpansionLevel = (Expansion)WorldConfig.Values[WorldCfg.Expansion].Int32;
-            SendPacket(initialSetup);
+            // InitialSetup is now sent after LoginVerifyWorld matching HermesProxy
 
             SetMovedUnit(this);
         }
@@ -5599,7 +5604,7 @@ namespace Game.Entities
             GetZoneAndAreaId(out newzone, out newarea);
             UpdateZone(newzone, newarea);                            // also call SendInitWorldStates();
 
-            GetSession().SendLoadCUFProfiles();
+            // GetSession().SendLoadCUFProfiles();
 
             CastSpell(this, 836, true);                             // LOGINEFFECT
 
@@ -6220,20 +6225,17 @@ namespace Game.Entities
                 }
 
                 SetupCurrency.Record record = new();
-                record.Type = currencyRecord.Id;
-                record.Quantity = currency.Quantity;
+                record.Type = (uint)currencyRecord.Id;
+                record.Quantity = (uint)currency.Quantity;
 
                 if ((currency.WeeklyQuantity / currencyRecord.Scaler) > 0)
-                    record.WeeklyQuantity = currency.WeeklyQuantity;
+                    record.WeeklyQuantity = (uint)currency.WeeklyQuantity;
 
                 if (currencyRecord.HasMaxEarnablePerWeek)
-                    record.MaxWeeklyQuantity = GetCurrencyWeeklyCap(currencyRecord);
+                    record.MaxWeeklyQuantity = (uint)GetCurrencyWeeklyCap(currencyRecord);
 
                 if (currencyRecord.IsTrackingQuantity)
-                    record.TrackedQuantity = currency.TrackedQuantity;
-
-                if (currencyRecord.HasTotalEarned)
-                    record.TotalEarned = currency.EarnedQuantity;
+                    record.TrackedQuantity = (uint)currency.TrackedQuantity;
 
                 if (currencyRecord.HasMaxQuantity(true))
                     record.MaxQuantity = GetCurrencyMaxQuantity(currencyRecord, true);
@@ -7705,6 +7707,12 @@ namespace Game.Entities
 
         public override void BuildCreateUpdateBlockForPlayer(UpdateData data, Player target)
         {
+            // ORDER MATTERS: the item objects must be created BEFORE the player's
+            // own block, because that block's ACTIVE_PLAYER_FIELD_INV_SLOT_* fields
+            // name those items by guid. Emitting the player first leaves the client
+            // holding guids for objects it has not been told about yet, so the
+            // paper doll and bags come up empty even though the items exist
+            // server-side. This is also the upstream ordering.
             if (target == this)
             {
                 for (byte i = EquipmentSlot.Start; i < InventorySlots.BankBagEnd; ++i)
@@ -7721,7 +7729,7 @@ namespace Game.Entities
                         continue;
 
                     m_items[i].BuildCreateUpdateBlockForPlayer(data, target);
-                }                
+                }
             }
 
             base.BuildCreateUpdateBlockForPlayer(data, target);

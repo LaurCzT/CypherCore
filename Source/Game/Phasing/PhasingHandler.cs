@@ -435,21 +435,8 @@ namespace Game
 
         public static void SendToPlayer(Player player, PhaseShift phaseShift)
         {
-            PhaseShiftChange phaseShiftChange = new();
-            phaseShiftChange.Client = player.GetGUID();
-            phaseShiftChange.Phaseshift.PhaseShiftFlags = phaseShift.Flags;
-            phaseShiftChange.Phaseshift.PersonalGUID = phaseShift.PersonalGuid;
-
-            foreach (var pair in phaseShift.Phases)
-                phaseShiftChange.Phaseshift.Phases.Add(new PhaseShiftDataPhase(pair.Value.Flags, pair.Key));
-
-            foreach (var visibleMapId in phaseShift.VisibleMapIds)
-                phaseShiftChange.VisibleMapIDs.Add((ushort)visibleMapId.Key);
-
-            foreach (var uiWorldMapAreaIdSwap in phaseShift.UiMapPhaseIds)
-                phaseShiftChange.UiMapPhaseIDs.Add((ushort)uiWorldMapAreaIdSwap.Key);
-
-            player.SendPacket(phaseShiftChange);
+            // Classic Era (1.14.x) has no client PhaseShiftChange packet
+            return;
         }
 
         public static void SendToPlayer(Player player)
