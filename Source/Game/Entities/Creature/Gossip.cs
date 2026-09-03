@@ -1,4 +1,4 @@
-// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Collections;
@@ -245,6 +245,16 @@ namespace Game.Misc
             GossipMenuAddon addon = Global.ObjectMgr.GetGossipMenuAddon(packet.GossipID);
             if (addon != null)
                 packet.FriendshipFactionID = addon.FriendshipFactionID;
+
+            // 1.14 reads the npc_text id straight out of TextID -- HermesProxy's
+            // SMSG_GOSSIP_MESSAGE writes it as a plain int32 in this same position, and the field
+            // comment on GossipMessagePkt says as much. Retail superseded it with BroadcastTextID
+            // and only that was being filled in, so TextID.GetValueOrDefault() put a 0 on the wire
+            // and every gossip window arrived with no greeting text. NPCs with menu options still
+            // looked fine because the client draws the option list, but a questgiver with nothing
+            // left to offer rendered a completely blank frame -- which looked like the NPC could
+            // no longer be talked to at all once you had taken its quest.
+            packet.TextID = titleTextId;
 
             NpcText text = Global.ObjectMgr.GetNpcText(titleTextId);
             if (text != null)

@@ -1,4 +1,4 @@
-// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Collections;
@@ -266,6 +266,17 @@ namespace Game
             obj.Amount = fields.Read<int>(5);
             obj.Flags = (QuestObjectiveFlags)fields.Read<uint>(6);
             obj.Flags2 = (QuestObjectiveFlags2)fields.Read<uint>(7);
+
+            // 1.14 has no quest-bound items. In Classic a quest item is a real item sitting in
+            // the bags and the client counts what it finds there. QuestBoundItem is a retail
+            // behaviour: StoreNewItem credits the objective then returns null without ever
+            // creating the item ("QUEST_BOUND_ITEM prevents item creation"), so looting one
+            // showed a pickup toast, ticked the server-side counter, and left the bag empty --
+            // and the quest log then read 0 because the client had nothing to count. 2110 of the
+            // 3807 item objectives in the world DB carry the flag, so strip it at load rather
+            // than rely on it being absent from the data.
+            obj.Flags2 &= ~QuestObjectiveFlags2.QuestBoundItem;
+
             obj.ProgressBarWeight = fields.Read<float>(8);
             obj.Description = fields.Read<string>(9);
 

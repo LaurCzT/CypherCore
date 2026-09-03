@@ -1,4 +1,4 @@
-// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Collections;
@@ -402,7 +402,7 @@ namespace Game
             if (packet.GetOpcode() == ServerOpcodes.OnMonsterMove && PlayerLoading())
                 return;
 
-            Log.outInfo(LogFilter.Network, $"Sending packet: {packet.GetOpcode()} ({packet.GetType().Name})");
+            Log.outDebug(LogFilter.Network, $"Sending packet: {packet.GetOpcode()} ({packet.GetType().Name})");
 
             ConnectionType conIdx = packet.GetConnection();
             if (conIdx != ConnectionType.Instance && PacketManager.IsInstanceOnlyOpcode(packet.GetOpcode()))

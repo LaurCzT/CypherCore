@@ -1,4 +1,4 @@
-using Game.Entities;
+﻿using Game.Entities;
 using Framework.Constants;
 
 namespace Game.Networking.Adapters.V1_14_0
@@ -321,73 +321,52 @@ namespace Game.Networking.Adapters.V1_14_0
                     // Inventory slots (Equipment + Bags + Items + Bank + Keyring) mapped to 1.14 Classic offsets
                     int invBaseIndex = (int)ActivePlayerField.ACTIVE_PLAYER_FIELD_INV_SLOT_HEAD;
                     
-                    // Equipment (0..18)
-                    for (byte i = 0; i < 19; ++i)
+                    // Every slot is written on EVERY update, empty ones as ObjectGuid.Empty.
+                    // Skipping empty slots leaves them unmarked in the update mask, so the client
+                    // keeps the guid it was last told: equipping out of a bag set the equipment slot
+                    // but never cleared the bag slot, and the item showed up in both places at once.
+                    // Nothing was duplicated server-side -- only the client's view of the vacated
+                    // slot was stale. Same shape as the creature-health-zero bug: a legitimate value
+                    // of "nothing here" was being treated as "no news".
+                    (byte internalStart, byte internalEnd, int classicStart)[] invRegions =
                     {
-                        Item eq = player.GetItemByPos(i);
-                        if (eq != null)
-                            updateArray.SetUpdateField(invBaseIndex + i * 4, eq.GetGUID());
-                    }
-                    // Equipped Bags (30..33 -> Classic 19..22)
-                    for (byte i = InventorySlots.BagStart; i < InventorySlots.BagEnd; ++i)
+                        (EquipmentSlot.Start,          EquipmentSlot.End,            0),
+                        (InventorySlots.BagStart,      InventorySlots.BagEnd,       19),
+                        (InventorySlots.ItemStart,     InventorySlots.ItemEnd,      23),
+                        (InventorySlots.BankItemStart, InventorySlots.BankItemEnd,  47),
+                        (InventorySlots.BankBagStart,  InventorySlots.BankBagEnd,   75),
+                        (InventorySlots.BuyBackStart,  InventorySlots.BuyBackEnd,   82),
+                        (InventorySlots.KeyringStart,  InventorySlots.KeyringEnd,   94),
+                    };
+
+                    foreach (var (internalStart, internalEnd, classicStart) in invRegions)
                     {
-                        Item bag = player.GetItemByPos(i);
-                        if (bag != null)
+                        for (byte i = internalStart; i < internalEnd; ++i)
                         {
-                            int classicSlot = 19 + (i - InventorySlots.BagStart);
-                            updateArray.SetUpdateField(invBaseIndex + classicSlot * 4, bag.GetGUID());
+                            Item slotItem = player.GetItemByPos(i);
+                            int classicSlot = classicStart + (i - internalStart);
+                            updateArray.SetUpdateField(invBaseIndex + classicSlot * 4,
+                                slotItem != null ? slotItem.GetGUID() : ObjectGuid.Empty);
                         }
                     }
-                    // Backpack Items (35..58 -> Classic 23..46)
-                    for (byte i = InventorySlots.ItemStart; i < InventorySlots.ItemEnd; ++i)
-                    {
-                        Item invItem = player.GetItemByPos(i);
-                        if (invItem != null)
-                        {
-                            int classicSlot = 23 + (i - InventorySlots.ItemStart);
-                            updateArray.SetUpdateField(invBaseIndex + classicSlot * 4, invItem.GetGUID());
-                        }
-                    }
-                    // Bank Items (59..86 -> Classic 47..74)
-                    for (byte i = InventorySlots.BankItemStart; i < InventorySlots.BankItemEnd; ++i)
-                    {
-                        Item bankItem = player.GetItemByPos(i);
-                        if (bankItem != null)
-                        {
-                            int classicSlot = 47 + (i - InventorySlots.BankItemStart);
-                            updateArray.SetUpdateField(invBaseIndex + classicSlot * 4, bankItem.GetGUID());
-                        }
-                    }
-                    // Bank Bags (87..93 -> Classic 75..81)
-                    for (byte i = InventorySlots.BankBagStart; i < InventorySlots.BankBagEnd; ++i)
-                    {
-                        Item bankBag = player.GetItemByPos(i);
-                        if (bankBag != null)
-                        {
-                            int classicSlot = 75 + (i - InventorySlots.BankBagStart);
-                            updateArray.SetUpdateField(invBaseIndex + classicSlot * 4, bankBag.GetGUID());
-                        }
-                    }
-                    // Buyback (94..105 -> Classic 82..93)
-                    for (byte i = InventorySlots.BuyBackStart; i < InventorySlots.BuyBackEnd; ++i)
-                    {
-                        Item bbItem = player.GetItemByPos(i);
-                        if (bbItem != null)
-                        {
-                            int classicSlot = 82 + (i - InventorySlots.BuyBackStart);
-                            updateArray.SetUpdateField(invBaseIndex + classicSlot * 4, bbItem.GetGUID());
-                        }
-                    }
-                    // Keyring (106..137 -> Classic 94..125)
-                    for (byte i = InventorySlots.KeyringStart; i < InventorySlots.KeyringEnd; ++i)
-                    {
-                        Item krItem = player.GetItemByPos(i);
-                        if (krItem != null)
-                        {
-                            int classicSlot = 94 + (i - InventorySlots.KeyringStart);
-                            updateArray.SetUpdateField(invBaseIndex + classicSlot * 4, krItem.GetGUID());
-                        }
-                    }
+
+                    // Explored zones -- the world map's fog of war. Each ulong carries 64 area
+                    // bits and takes two uint32 slots, so entry i lands at base + i * 2; that is
+                    // the same 240-entry walk HermesProxy does, and 240 * 2 is exactly the 480
+                    // slots the field reserves. Nothing wrote this field at all, so the client
+                    // was handed an all-zero exploration mask and no map ever revealed.
+                    int exploredBase = (int)ActivePlayerField.ACTIVE_PLAYER_FIELD_EXPLORED_ZONES;
+                    for (int i = 0; i < player.m_activePlayerData.ExploredZones.GetSize(); ++i)
+                        updateArray.SetUpdateField(exploredBase + i * 2, (ulong)player.m_activePlayerData.ExploredZones[i]);
+
+                    // The client draws the reputation bar whenever this index is >= 0. It was
+                    // never written either, so the client kept its own default of 0 and drew a bar
+                    // for whatever faction sits at index 0, with junk standing values, on a
+                    // character that has discovered no factions at all. The server-side value is
+                    // already -1 ("none", stored as 0xFFFFFFFF in characters.watchedFaction) --
+                    // it simply was not being sent.
+                    updateArray.SetUpdateField((int)ActivePlayerField.ACTIVE_PLAYER_FIELD_WATCHED_FACTION_INDEX,
+                        (int)player.m_activePlayerData.WatchedFactionIndex.GetValue());
 
                     // Skills (mapped into 7 128-ushort blocks)
                     var skillData = player.m_activePlayerData.Skill.GetValue();

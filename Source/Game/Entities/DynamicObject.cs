@@ -1,4 +1,4 @@
-// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -270,6 +270,17 @@ namespace Game.Entities
 
         void BuildValuesUpdateForPlayerWithMask(UpdateData data, UpdateMask requestedObjectMask, UpdateMask requestedDynamicObjectMask, Player target)
         {
+            // 1.14.0: this partial "only the fields I marked" block is a RETAIL layout
+            // (uint32 payload size, then a valuesMask and per-type changesMask runs). The 1.14
+            // client cannot parse it, answers SMSG_UPDATE_OBJECT with CMSG_OBJECT_UPDATE_FAILED
+            // and then drops the connection -- which is what made accepting a quest disconnect:
+            // Player::UpdateVisibleObjectInteractions emitted one of these for every visible NPC.
+            // The 1.14 adapter's values block is a flat array plus mask over the whole field
+            // space, so there is no partial form to preserve; send the full block instead, the
+            // same way BuildValuesUpdateBlockForPlayerWithFlag already ignores its flags.
+            Game.Networking.Adapters.V1_14_0.UpdateObjectBuilder1140.BuildValuesUpdateBlockForPlayer(data, this, target);
+            return;
+
             UpdateMask valuesMask = new((int)TypeId.Max);
             if (requestedObjectMask.IsAnySet())
                 valuesMask.Set((int)TypeId.Object);

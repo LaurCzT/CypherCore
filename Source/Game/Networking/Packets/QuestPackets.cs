@@ -1,4 +1,4 @@
-// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -52,7 +52,13 @@ namespace Game.Networking.Packets
         public override void Write()
         {
             _worldPacket.WritePackedGuid(QuestGiver.Guid);
-            _worldPacket.WriteUInt64((ulong)QuestGiver.Status);
+            // 1.14 carries the status as a uint32; retail widened it to 64 bits. HermesProxy's
+            // SMSG_QUEST_GIVER_STATUS writes uint32, and the flag values are identical bit for
+            // bit, so only the width was wrong. A trailing 4 bytes is harmless in this
+            // single-status packet -- which is exactly why an icon corrected itself as soon as
+            // the object re-entered view and the client re-queried it -- but see the multiple
+            // form below, where it desynced everything after the first entry.
+            _worldPacket.WriteUInt32((uint)QuestGiver.Status);
         }
 
         public QuestGiverInfo QuestGiver;
@@ -68,7 +74,12 @@ namespace Game.Networking.Packets
             foreach (QuestGiverInfo questGiver in QuestGiver)
             {
                 _worldPacket.WritePackedGuid(questGiver.Guid);
-                _worldPacket.WriteUInt64((ulong)questGiver.Status);
+                // The extra 4 bytes of a uint64 sat between entries here, so the client read the
+                // high half as the start of the next entry's packed guid and every quest giver
+                // after the first got a garbage status. That is why the "!" and "?" markers went
+                // stale after taking or completing a quest and only fixed themselves once the NPC
+                // left view: this push was unreadable, and the per-object query reply was not.
+                _worldPacket.WriteUInt32((uint)questGiver.Status);
             }
         }
 
