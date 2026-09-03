@@ -1,4 +1,4 @@
-// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Collections;
@@ -3492,7 +3492,8 @@ namespace Game.Entities
             // update items with duration and realtime
             UpdateItemDuration(time_diff, true);
 
-            StartLoadingActionButtons();
+            // must be before the first UpdateObject: 1.14 sends the bar in the create block
+            LoadActionButtonsNow();
 
             // unread mails and next delivery time, actual mails not loaded
             _LoadMail(holder.GetResult(PlayerLoginQueryLoad.Mails), holder.GetResult(PlayerLoginQueryLoad.MailItems));

@@ -8,6 +8,10 @@ using System.Collections.Generic;
 
 namespace Game.Networking.Packets
 {
+    // NOTE: the message-text length is 9 bits in 1.14, not the 11 of retail
+    // (HermesProxy ChatPackets.cs:157/170/186/205). Reading 11 shifted the text
+    // and everything after it, so inbound say/yell/emote/whisper/channel were
+    // all mis-parsed. The outbound SMSG_CHAT fix alone was not enough.
     public class ChatMessage : ClientPacket
     {
         public ChatMessage(WorldPacket packet) : base(packet) { }
@@ -15,19 +19,10 @@ namespace Game.Networking.Packets
         public override void Read()
         {
             Language = (Language)_worldPacket.ReadInt32();
-            int len = _worldPacket.ReadBits<int>(11);
-            switch (GetOpcode())
-            {
-                case ClientOpcodes.ChatMessageSay:
-                case ClientOpcodes.ChatMessageParty:
-                case ClientOpcodes.ChatMessageRaid:
-                case ClientOpcodes.ChatMessageRaidWarning:
-                case ClientOpcodes.ChatMessageInstanceChat:
-                    IsSecure = _worldPacket.HasBit();
-                    break;
-                default:
-                    break;
-            }
+            int len = _worldPacket.ReadBits<int>(9);
+            // The IsSecure bit is a retail addition; 1.14 goes straight from the
+            // length to the text (HermesProxy ChatPackets.cs ChatMessage.Read).
+            // Reading it shifted the message body of every /say, /party and /raid.
             Text = _worldPacket.ReadString(len);
         }
 
@@ -44,7 +39,7 @@ namespace Game.Networking.Packets
         {
             Language = (Language)_worldPacket.ReadInt32();
             int targetLen = _worldPacket.ReadBits<int>(9);
-            int textLen = _worldPacket.ReadBits<int>(11);
+            int textLen = _worldPacket.ReadBits<int>(9);
             Target = _worldPacket.ReadString(targetLen);
             Text = _worldPacket.ReadString(textLen);
         }
@@ -63,10 +58,10 @@ namespace Game.Networking.Packets
             Language = (Language)_worldPacket.ReadInt32();
             ChannelGUID = _worldPacket.ReadPackedGuid();
             int targetLen = _worldPacket.ReadBits<int>(9);
-            int textLen = _worldPacket.ReadBits<int>(11);
-            if (_worldPacket.HasBit())
-                IsSecure = _worldPacket.HasBit();
-
+            int textLen = _worldPacket.ReadBits<int>(9);
+            // Retail-only IsSecure block -- 1.14 goes straight to the strings
+            // (HermesProxy ChatPackets.cs ChatMessageChannel.Read). Those two bits
+            // shifted the channel name and the message text.
             Target = _worldPacket.ReadString(targetLen);
             Text = _worldPacket.ReadString(textLen);
         }
@@ -115,7 +110,7 @@ namespace Game.Networking.Packets
 
         public override void Read()
         {
-            int len = _worldPacket.ReadBits<int>(11);
+            int len = _worldPacket.ReadBits<int>(9);
             Text = _worldPacket.ReadString(len);
         }
 
@@ -128,7 +123,7 @@ namespace Game.Networking.Packets
 
         public override void Read()
         {
-            int len = _worldPacket.ReadBits<int>(11);
+            int len = _worldPacket.ReadBits<int>(9);
             Text = _worldPacket.ReadString(len);
         }
 
@@ -141,7 +136,7 @@ namespace Game.Networking.Packets
 
         public override void Read()
         {
-            int len = _worldPacket.ReadBits<int>(11);
+            int len = _worldPacket.ReadBits<int>(9);
             Text = _worldPacket.ReadString(len);
         }
 

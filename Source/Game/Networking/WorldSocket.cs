@@ -42,6 +42,7 @@ namespace Game.Networking
         WorldSession _worldSession;
 
         ZLib.z_stream _compressionStream;
+        bool _compressionInitFailed;
 
         AsyncCallbackProcessor<QueryCallback> _queryProcessor = new();
         string _ipCountry;
@@ -405,7 +406,13 @@ namespace Game.Networking
             ByteBuffer buffer = new();
 
             int packetSize = data.Length;
-            if (packetSize > 0x400 && _worldCrypt.IsInitialized)
+            // The zlib deflate stream is only created in the legacy "WORLD OF WARCRAFT
+            // CONNECTION" init path, which the 1.14 encrypted handshake never takes -- so
+            // _compressionStream was null here and any packet over 1KB threw a
+            // NullReferenceException on the map update thread and took the server down.
+            // Initialise it on demand, and if that fails just send uncompressed (the
+            // client is happy either way; compression is only an optimisation).
+            if (packetSize > 0x400 && _worldCrypt.IsInitialized && EnsureCompressionStream())
             {
                 buffer.WriteInt32(packetSize + 2);
                 buffer.WriteUInt32(ZLib.adler32(ZLib.adler32(0x9827D8F1, BitConverter.GetBytes((ushort)opcode), 2), data, (uint)packetSize));
@@ -452,6 +459,34 @@ namespace Game.Networking
         {
             lock (_worldSessionLock)
                 _worldSession = session;
+        }
+
+        /// <summary>
+        /// Creates the deflate stream if it does not exist yet. Returns false if
+        /// compression is unavailable, in which case the caller must send the packet
+        /// uncompressed rather than dereference a null stream.
+        /// </summary>
+        bool EnsureCompressionStream()
+        {
+            if (_compressionStream != null)
+                return true;
+
+            if (_compressionInitFailed)
+                return false;
+
+            var stream = new ZLib.z_stream();
+            int res = ZLib.deflateInit2(stream, 1, 8, -15, 8, 0);
+            if (res != 0)
+            {
+                _compressionInitFailed = true;
+                Log.outError(LogFilter.Network,
+                    $"WorldSocket: can't initialize packet compression " +
+                    $"(zlib: deflateInit2_) Error code: {res}. Sending uncompressed.");
+                return false;
+            }
+
+            _compressionStream = stream;
+            return true;
         }
 
         public uint CompressPacket(byte[] data, ServerOpcodes opcode, out byte[] outData)

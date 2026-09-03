@@ -29,8 +29,12 @@ namespace Game.Networking.Packets
 
         public override void Read()
         {
-            Auctioneer = _worldPacket.ReadPackedGuid();
+            // 1.14 sends Offset BEFORE the auctioneer guid, and has no TaintedBy
+            // block (HermesProxy AuctionPackets.cs:84-88). Reading the retail order
+            // took the guid off the front of a uint32, so the whole browse request
+            // was garbage and the auction list never populated.
             Offset = _worldPacket.ReadInt32();
+            Auctioneer = _worldPacket.ReadPackedGuid();
             MinLevel = _worldPacket.ReadUInt8();
             MaxLevel = _worldPacket.ReadUInt8();
             Quality = (ItemQuality)_worldPacket.ReadInt32();
@@ -50,29 +54,36 @@ namespace Game.Networking.Packets
             for (var i = 0; i < knownPetSize; ++i)
                 KnownPets[i] = _worldPacket.ReadUInt8();
 
-            if (_worldPacket.HasBit())
-                TaintedBy = new();
-
             int nameLength = _worldPacket.ReadBits<int>(8);
             Name = _worldPacket.ReadString(nameLength);
 
-            _worldPacket.ResetBitPos();
             int itemClassFilterCount = _worldPacket.ReadBits<int>(3);
             UsableOnly = _worldPacket.HasBit();
             ExactMatch = _worldPacket.HasBit();
-
-            if (TaintedBy.HasValue)
-                TaintedBy.Value.Read(_worldPacket);
+            _worldPacket.ResetBitPos();
 
             for (var i = 0; i < itemClassFilterCount; ++i)
                 ItemClassFilters[i] = new AuctionListFilterClass(_worldPacket);
 
+            // 1.14 sends the sort list as a NESTED length-prefixed blob rather than
+            // inline, and the retail code read the length then parsed the sorts from
+            // the outer stream -- so the sorts and anything after them came out of
+            // the wrong offsets. (HermesProxy AuctionPackets.cs:123-132.)
             int sortDataSize = _worldPacket.ReadInt32();
-            for (var i = 0; i < sortsCount; ++i)
+            byte[] sortData = _worldPacket.ReadBytes(sortDataSize);
+
+            // Each sort entry is a flat (Order, Direction) byte pair inside that
+            // blob. Do NOT wrap it in a WorldPacket to read it: that ctor passes
+            // writable:true to ByteBuffer, which builds a write stream and leaves
+            // readStream null -- the first ReadUInt8 then threw and killed the
+            // world thread. Parse the pairs directly, and never read past the
+            // blob however large sortsCount claims to be.
+            for (var i = 0; i < sortsCount && (i * 2) + 1 < sortData.Length; ++i)
             {
-                var current = new AuctionSortDef(_worldPacket);
-                Cypher.Assert(!Sorts.Contains(current));
-                Sorts.Add(current);
+                var current = new AuctionSortDef((AuctionHouseSortOrder)sortData[i * 2],
+                                                 (AuctionHouseSortDirection)sortData[(i * 2) + 1]);
+                if (!Sorts.Contains(current))
+                    Sorts.Add(current);
             }
         }
     }
@@ -101,9 +112,12 @@ namespace Game.Networking.Packets
 
         public override void Write()
         {
+            // 1.14 carries only the auctioneer guid, the auction house id and the
+            // OpenForBusiness bit. The two delivery-delay fields are a retail
+            // addition (HermesProxy AuctionPackets.cs AuctionHelloResponse), and
+            // writing them pushed the id and the bit 8 bytes out of place, so the
+            // client never opened the auction window.
             _worldPacket.WritePackedGuid(Guid);
-            _worldPacket.WriteInt32(PurchasedItemDeliveryDelay);
-            _worldPacket.WriteInt32(CancelledItemDeliveryDelay);
             _worldPacket.WriteInt32((int)AuctionHouseId);
             _worldPacket.WriteBit(OpenForBusiness);
             _worldPacket.FlushBits();
@@ -126,11 +140,9 @@ namespace Game.Networking.Packets
             Offset = _worldPacket.ReadInt32();            
 
             int auctionIDCount = _worldPacket.ReadBits<int>(7);
-            if (_worldPacket.HasBit())
-                TaintedBy = new();
-
-            if (TaintedBy.HasValue)
-                TaintedBy.Value.Read(_worldPacket);
+            // No TaintedBy block in 1.14 -- just realign and read the ids
+            // (HermesProxy AuctionPackets.cs AuctionListBidderItems.Read).
+            _worldPacket.ResetBitPos();
 
             for (var i = 0; i < auctionIDCount; ++i)
                 AuctionItemIDs[i] = _worldPacket.ReadInt32();
@@ -166,14 +178,11 @@ namespace Game.Networking.Packets
 
         public override void Read()
         {
+            // 1.14 sends only the auctioneer and the offset -- the TaintedBy block
+            // is retail-only and reading it ran off the end of the packet, so
+            // "my auctions" never returned anything.
             Auctioneer = _worldPacket.ReadPackedGuid();
             Offset = _worldPacket.ReadInt32();
-
-            if (_worldPacket.HasBit())
-                TaintedBy = new();
-
-            if (TaintedBy.HasValue)
-                TaintedBy.Value.Read(_worldPacket);
         }
     }
 
@@ -270,7 +279,11 @@ namespace Game.Networking.Packets
             if (_worldPacket.HasBit())
                 TaintedBy = new();
 
-            uint itemCount = _worldPacket.ReadBits<uint>(6);
+            // The item-count field widened from 5 to 6 bits in client 1.14.3
+            // (HermesProxy: AddedInClassicVersion(1,14,3, 2,5,4) ? 6 : 5).
+            // This realm serves build 40618 = 1.14.0, so it is 5. Reading 6
+            // consumed a bit too many and the posting request overran.
+            uint itemCount = _worldPacket.ReadBits<uint>(5);
 
             if (TaintedBy.HasValue)
                 TaintedBy.Value.Read(_worldPacket);
@@ -344,8 +357,17 @@ namespace Game.Networking.Packets
             _worldPacket.WriteInt32(Items.Count);
             _worldPacket.WriteInt32(TotalCount);
             _worldPacket.WriteInt32(DesiredDelay);
-            _worldPacket.WriteBit(OnlyUsable);
-            _worldPacket.FlushBits();
+
+            // 1.14 writes OnlyUsable as a plain 0/1 BYTE and only when the result
+            // set is non-empty (HermesProxy AuctionPackets.cs AuctionListItemsResult).
+            // WriteBit+FlushBits emits 0x80 rather than 0x01, and emitting it
+            // unconditionally gave the client one byte too many on an empty search --
+            // which is every search until the first auction is posted.
+            if (Items.Count > 0)
+            {
+                _worldPacket.FlushBits();
+                _worldPacket.WriteUInt8((byte)(OnlyUsable ? 1 : 0));
+            }
 
             foreach (AuctionItem item in Items)
                 item.Write(_worldPacket);

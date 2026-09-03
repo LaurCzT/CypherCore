@@ -372,14 +372,25 @@ namespace Game
             if (throttle.Throttled)
                 return;
 
+            // TEMP 1.14 diagnostic: dump what the parsed CMSG_AUCTION_SELL_ITEM
+            // actually contained, so a rejection can be told apart from a bad layout.
+            Log.outError(LogFilter.Network,
+                $"AH/sell: items={sellItem.Items.Count} minBid={sellItem.MinBid} " +
+                $"buyout={sellItem.BuyoutPrice} runTime={sellItem.RunTime} " +
+                $"(min={SharedConst.MinAuctionTime}) auctioneer={sellItem.Auctioneer} " +
+                $"itemGuid={(sellItem.Items.Count > 0 ? sellItem.Items[0].Guid.ToString() : "-")} " +
+                $"useCount={(sellItem.Items.Count > 0 ? sellItem.Items[0].UseCount : -1)}");
+
             if (sellItem.Items.Count != 1)
             {
+                Log.outError(LogFilter.Network, "AH/sell REJECT: item count != 1");
                 SendAuctionCommandResult(0, AuctionCommand.SellItem, AuctionResult.ItemNotFound, throttle.DelayUntilNext);
                 return;
             }
 
             if (sellItem.MinBid == 0)
             {
+                Log.outError(LogFilter.Network, "AH/sell REJECT: MinBid == 0");
                 SendAuctionCommandResult(0, AuctionCommand.SellItem, AuctionResult.DatabaseError, throttle.DelayUntilNext);
                 return;
             }
@@ -415,6 +426,10 @@ namespace Game
                 sellItem.RunTime.Ticks != 2 * SharedConst.MinAuctionTime.Ticks &&
                 sellItem.RunTime.Ticks != 4 * SharedConst.MinAuctionTime.Ticks)
             {
+                Log.outError(LogFilter.Network,
+                    $"AH/sell REJECT: bad RunTime {sellItem.RunTime} -- expected " +
+                    $"{SharedConst.MinAuctionTime}, {SharedConst.MinAuctionTime * 2} or " +
+                    $"{SharedConst.MinAuctionTime * 4}");
                 SendAuctionCommandResult(0, AuctionCommand.SellItem, AuctionResult.DatabaseError, throttle.DelayUntilNext);
                 return;
             }
@@ -425,6 +440,8 @@ namespace Game
             Item item = _player.GetItemByGuid(sellItem.Items[0].Guid);
             if (item == null)
             {
+                Log.outError(LogFilter.Network,
+                    $"AH/sell REJECT: no item with guid {sellItem.Items[0].Guid} on the player");
                 SendAuctionCommandResult(0, AuctionCommand.SellItem, AuctionResult.ItemNotFound, throttle.DelayUntilNext);
                 return;
             }
@@ -432,6 +449,12 @@ namespace Game
             if (Global.AuctionHouseMgr.GetAItem(item.GetGUID()) != null || !item.CanBeTraded() || item.IsNotEmptyBag() ||
                 item.GetTemplate().HasFlag(ItemFlags.Conjured) || item.m_itemData.Expiration != Seconds.Zero)
             {
+                Log.outError(LogFilter.Network,
+                    $"AH/sell REJECT: item {item.GetEntry()} ineligible -- " +
+                    $"alreadyInAH={Global.AuctionHouseMgr.GetAItem(item.GetGUID()) != null} " +
+                    $"canBeTraded={item.CanBeTraded()} notEmptyBag={item.IsNotEmptyBag()} " +
+                    $"conjured={item.GetTemplate().HasFlag(ItemFlags.Conjured)} " +
+                    $"expiration={item.m_itemData.Expiration}");
                 SendAuctionCommandResult(0, AuctionCommand.SellItem, AuctionResult.DatabaseError, throttle.DelayUntilNext);
                 return;
             }

@@ -49,6 +49,17 @@ namespace Game.Networking.Adapters.V1_14_0
             buffer.WriteBytes(fieldBuffer);
         }
 
+        // NOTE: every write marks its field in the update mask, unconditionally.
+        // This array is constructed fresh for each update block and the mapper
+        // re-reads the object's complete state into it, so there is no previous
+        // state here to diff against. The old code guarded each store with
+        // "does this differ from what the array already holds?", which -- against
+        // a zero-filled array -- silently discarded any field whose real value
+        // was 0. The visible consequence was that a creature's health reaching 0
+        // was never transmitted: the server killed it and awarded XP while the
+        // client kept the last non-zero health it had been told, so the creature
+        // stayed standing, could not be looted, and could not be attacked again
+        // (it was already dead server-side).
         public void SetUpdateField<T>(object index, T value, byte offset = 0) where T : new()
         {
             if (value is byte byteValue)
@@ -59,7 +70,6 @@ namespace Game.Networking.Adapters.V1_14_0
                     return;
                 }
 
-                if ((byte)(m_updateValues[(int)index].UnsignedValue >> (offset * 8)) != byteValue)
                 {
                     m_updateValues[(int)index].UnsignedValue &= ~(uint)(0xFF << (offset * 8));
                     m_updateValues[(int)index].UnsignedValue |= (uint)byteValue << (offset * 8);
@@ -74,7 +84,6 @@ namespace Game.Networking.Adapters.V1_14_0
                     return;
                 }
 
-                if ((ushort)(GetUpdateField<uint>(index) >> (offset * 16)) != ushortValue)
                 {
                     m_updateValues[(int)index].UnsignedValue &= ~((uint)0xFFFF << (offset * 16));
                     m_updateValues[(int)index].UnsignedValue |= (uint)ushortValue << (offset * 16);
@@ -83,7 +92,6 @@ namespace Game.Networking.Adapters.V1_14_0
             }
             else if (value is int intValue)
             {
-                if (m_updateValues[(int)index].SignedValue != intValue)
                 {
                     m_updateValues[(int)index].SignedValue = intValue;
                     m_updateMask.SetBit((int)index);
@@ -91,7 +99,6 @@ namespace Game.Networking.Adapters.V1_14_0
             }
             else if (value is uint uintValue)
             {
-                if (m_updateValues[(int)index].UnsignedValue != uintValue)
                 {
                     m_updateValues[(int)index].UnsignedValue = uintValue;
                     m_updateMask.SetBit((int)index);
@@ -99,7 +106,6 @@ namespace Game.Networking.Adapters.V1_14_0
             }
             else if (value is float floatValue)
             {
-                if (m_updateValues[(int)index].FloatValue != floatValue)
                 {
                     m_updateValues[(int)index].FloatValue = floatValue;
                     m_updateMask.SetBit((int)index);
@@ -107,7 +113,6 @@ namespace Game.Networking.Adapters.V1_14_0
             }
             else if (value is ulong ulongValue)
             {
-                if (GetUpdateField<ulong>(index) != ulongValue)
                 {
                     m_updateValues[(int)index].UnsignedValue = MathFunctions.Pair64_LoPart(ulongValue);
                     m_updateValues[(int)index + 1].UnsignedValue = MathFunctions.Pair64_HiPart(ulongValue);

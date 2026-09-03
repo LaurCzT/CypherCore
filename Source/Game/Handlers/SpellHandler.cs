@@ -33,7 +33,9 @@ namespace Game
             }
 
             if (_player.CanRequestSpellCast(spellInfo, _player))
-                _player.RequestSpellCast(new SpellCastRequest(packet.Cast, _player.GetGUID(), new SpellCastRequestItemData(packet.PackSlot, packet.Slot, packet.CastItem)));
+                _player.RequestSpellCast(new SpellCastRequest(packet.Cast, _player.GetGUID(), new SpellCastRequestItemData(
+                        Networking.Adapters.V1_14_0.InventorySlots1140.ToInternal(packet.PackSlot),
+                        packet.Slot, packet.CastItem)));
             else
                 Spell.SendCastResult(_player, spellInfo, default, packet.Cast.CastID, SpellCastResult.SpellInProgress);
         }

@@ -28,7 +28,7 @@ namespace Framework.Constants
         public const int ReqPrimaryTreeTalents = 31;
         public const int ExploredZonesSize = 192;
         public const long MaxMoneyAmount = 9999999999;
-        public const int MaxActionButtons = 180;
+        public const int MaxActionButtons = 132;   // 1.14: the ActivePlayer create block carries exactly 132
         public const int MaxActionButtonActionValue = 0x00FFFFFF + 1;
 
         public const int MaxDailyQuests = 25;

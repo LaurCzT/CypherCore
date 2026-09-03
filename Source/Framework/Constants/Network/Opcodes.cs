@@ -193,7 +193,11 @@ namespace Framework.Constants
         Complaint = 0x366e,
         CompleteCinematic = 0x3544,
         CompleteMovie = 0x34dd,
-        ConfirmBarbersChoice = 0x320e,
+        // 0x320E is CMSG_LOOT_ITEM in 1.14 (see LootItem below). Barber shops do not
+        // exist in Classic Era, and leaving this at the same value made the enum's
+        // reverse lookup report every loot packet as "ConfirmBarbersChoice", which
+        // hid the real failure. Parked on the removed-opcode sentinel.
+        ConfirmBarbersChoice = 0xbadd,
         ConfirmRespecWipe = 0x320B,
         ConnectToFailed = 0x35d4,
         ConsumableTokenBuy = 0x36Ee,

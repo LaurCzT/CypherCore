@@ -1552,7 +1552,11 @@ namespace Game.Networking.Packets
         public void Read(WorldPacket data)
         {
             data.ResetBitPos();
-            Flags = (SpellCastTargetFlags)data.ReadBits<uint>(28);
+            // SpellCastTargetFlags is 26 bits in 1.14, not the 28 of retail
+            // (HermesProxy SpellPackets.cs:827/858). Two extra bits here shifted
+            // every field after it in CMSG_CAST_SPELL, CMSG_USE_ITEM,
+            // SMSG_SPELL_START and SMSG_SPELL_GO -- i.e. all spell traffic.
+            Flags = (SpellCastTargetFlags)data.ReadBits<uint>(26);
             if (data.HasBit())
                 SrcLocation = new();
 
@@ -1584,7 +1588,7 @@ namespace Game.Networking.Packets
 
         public void Write(WorldPacket data)
         {
-            data.WriteBits((uint)Flags, 28);
+            data.WriteBits((uint)Flags, 26);   // 26 bits in 1.14, not 28
             data.WriteBit(SrcLocation != null);
             data.WriteBit(DstLocation != null);
             data.WriteBit(Orientation.HasValue);
@@ -1646,8 +1650,8 @@ namespace Game.Networking.Packets
             ItemID = data.ReadInt32();
             DataSlotIndex = data.ReadInt32();
             Quantity = data.ReadInt32();
-            if (data.HasBit())
-                Unknown_1000 = data.ReadUInt8();
+            // Unknown_1000 and its presence bit are a retail addition. 1.14 sends
+            // three flat int32s (HermesProxy SpellPackets.cs SpellOptionalReagent).
         }
 
         public int ItemID;
@@ -1680,9 +1684,21 @@ namespace Game.Networking.Packets
             MissileTrajectory.Read(data);
             CraftingNPC = data.ReadPackedGuid();
 
-            var optionalCurrenciesCount = data.ReadUInt32();
+            // 1.14.0 layout (HermesProxy SpellPackets.cs SpellCastRequest.Read):
+            //   the two array counts are REAGENTS then CURRENCIES -- the retail
+            //   order is reversed and adds a third "removedModifications" count --
+            //   and BOTH arrays are read here, before the bit block. Retail also
+            //   carries a hasCraftingOrderID bit plus a uint64, and a
+            //   removedModifications array; none of that exists in 1.14.
+            //   Reading the retail shape consumed 4 extra bytes up front and then
+            //   pulled the arrays from the wrong offsets, so every CMSG_CAST_SPELL
+            //   and CMSG_USE_ITEM was mis-parsed -- UseItem was already failing with
+            //   an EndOfStreamException in the log.
             var optionalReagentsCount = data.ReadUInt32();
-            var removedModificationsCount = data.ReadUInt32();
+            var optionalCurrenciesCount = data.ReadUInt32();
+
+            for (var i = 0; i < optionalReagentsCount; ++i)
+                OptionalReagents[i].Read(data);
 
             for (var i = 0; i < optionalCurrenciesCount; ++i)
                 OptionalCurrencies[i].Read(data);
@@ -1690,20 +1706,12 @@ namespace Game.Networking.Packets
             SendCastFlags = (byte)data.ReadBits<uint>(5);
             bool hasMoveUpdate = data.HasBit();
             var weightCount = data.ReadBits<uint>(2);
-            bool hasCraftingOrderID = data.HasBit();
             Target.Read(data);
-
-            if (hasCraftingOrderID)
-                CraftingOrderID = data.ReadUInt64();
-
-            for (var i = 0; i < optionalReagentsCount; ++i)
-                OptionalReagents[i].Read(data);
-
-            for (var i = 0; i < removedModificationsCount; ++i)
-                RemovedModifications[i].Read(data);
 
             if (hasMoveUpdate)
             {
+                // MovementInfo.Read starts by reading the mover guid, which is what
+                // the reference reads separately before the movement block.
                 MoveUpdate = new();
                 MoveUpdate.Read(data);
             }

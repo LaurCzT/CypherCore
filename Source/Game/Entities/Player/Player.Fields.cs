@@ -1,4 +1,4 @@
-// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -410,19 +410,24 @@ namespace Game.Entities
             }
         }
 
+        // 1.14 packs a button as a 24 bit action with the type in the top byte
+        // (vmangos Player.h: action | (type << 24)). The 23 bit shift used here before put the
+        // type one bit too low, so the client decoded item and macro buttons as the wrong type,
+        // and it also overlapped the type with action ids above 0x7FFFFF -- which
+        // PlayerConst.MaxActionButtonActionValue (0x00FFFFFF + 1) accepts as valid.
         static uint MAKE_UNIT_ACTION_BUTTON(int action, ActionButtonType type)
         {
-            return (uint)(action | ((int)type << 23));
+            return ((uint)action & 0x00FFFFFF) | ((uint)type << 24);
         }
 
         static int UNIT_ACTION_BUTTON_ACTION(uint packedData)
         {
-            return (int)(packedData & 0x007FFFFF);
+            return (int)(packedData & 0x00FFFFFF);
         }
 
         static ActionButtonType UNIT_ACTION_BUTTON_TYPE(uint packedData)
         {
-            return (ActionButtonType)((packedData & 0xFF800000) >>> 23);
+            return (ActionButtonType)((packedData & 0xFF000000) >> 24);
         }
     }
 

@@ -1,4 +1,4 @@
-// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
+﻿// Copyright (c) CypherCore <http://github.com/CypherCore> All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE. See LICENSE file in the project root for full license information.
 
 using Framework.Constants;
@@ -416,7 +416,7 @@ namespace Game.Entities
             }
         }
 
-        void StartLoadingActionButtons(Action callback = null)
+        PreparedStatement BuildLoadActionButtonsStatement()
         {
             uint traitConfigId = 0;
 
@@ -435,11 +435,27 @@ namespace Game.Entities
                     traitConfigId = (uint)(int)m_activePlayerData.TraitConfigs[usedSavedTraitConfigIndex].ID;
             }
 
-            // load them asynchronously
             PreparedStatement stmt = CharacterDatabase.GetPreparedStatement(CharStatements.SEL_CHARACTER_ACTIONS_SPEC);
             stmt.SetInt64(0, GetGUID().GetCounter());
             stmt.SetUInt8(1, GetActiveTalentGroup());
             stmt.SetUInt32(2, traitConfigId);
+            return stmt;
+        }
+
+        // 1.14.0 delivers the action bar inside the ActivePlayer create block instead of a
+        // standalone packet, so the buttons must already be in m_actionButtons by the time that
+        // block is built. The async loader below is too late for login: its callback only runs on
+        // a later world tick, long after the create block went out carrying 132 zeroes, and the
+        // SendActionButtons that follows it is a no-op on 1.14. The bar therefore came up empty
+        // on every login even though character_action held the right rows.
+        public void LoadActionButtonsNow()
+        {
+            _LoadActions(DB.Characters.Query(BuildLoadActionButtonsStatement()));
+        }
+
+        void StartLoadingActionButtons(Action callback = null)
+        {
+            PreparedStatement stmt = BuildLoadActionButtonsStatement();
 
             var myGuid = GetGUID();
 

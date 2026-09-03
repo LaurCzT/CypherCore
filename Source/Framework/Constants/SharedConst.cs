@@ -149,7 +149,13 @@ namespace Framework.Constants
         public const int MaxAccountTutorialValues = 8;
         public const int AuctionListItemsMax = 50;
         public const int AuctionBrowseItemsMax = 500;
-        public static readonly TimeSpan MinAuctionTime = (Hours)12;
+        // Classic Era uses the VANILLA auction durations of 2 / 4 / 8 hours. The
+        // 12 / 24 / 48 hour tiers arrived in TBC, and a 1.14.0 client sends 120 /
+        // 240 / 480 minutes -- a live capture showed 8h. With this at 12h the
+        // duration check rejected every posting with "Internal auction error".
+        // Also feeds the deposit rate in AuctionManager, where 2h is likewise the
+        // correct vanilla base.
+        public static readonly TimeSpan MinAuctionTime = (Hours)2;
         public const int MaxConditionTargets = 3;
 
         /// <summary>

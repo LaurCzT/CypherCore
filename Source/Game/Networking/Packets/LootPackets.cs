@@ -83,7 +83,11 @@ namespace Game.Networking.Packets
                 Loot.Add(loot);
             }
 
-            IsSoftInteract = _worldPacket.HasBit();
+            // 1.14.0 ends the packet after the loot list. IsSoftInteract is a retail
+            // addition, and reading that bit ran off the end of the buffer, so every
+            // loot request died with an EndOfStreamException and was skipped -- the
+            // creature stayed lootable-but-unlootable. Verified against HermesProxy
+            // LootPackets.cs LootItemPkt.Read, which stops after the loop.
         }
         
         public List<LootRequest> Loot = new();
@@ -144,11 +148,11 @@ namespace Game.Networking.Packets
     {
         public LootMoney(WorldPacket packet) : base(packet) { }
 
-        public override void Read()
-        {
-            IsSoftInteract = _worldPacket.HasBit();
-        }
-        
+        // CMSG_LOOT_MONEY has an EMPTY body in 1.14 (HermesProxy LootPackets.cs:145).
+        // IsSoftInteract is a retail addition; reading that bit overran the buffer and
+        // killed every "loot the coin" request.
+        public override void Read() { }
+
         public bool IsSoftInteract;
     }
 

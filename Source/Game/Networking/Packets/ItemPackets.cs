@@ -1054,7 +1054,9 @@ namespace Game.Networking.Packets
                 byte containerSlot = data.ReadUInt8();
                 byte slot = data.ReadUInt8();
 
-                Items.Add(new(slot, containerSlot));
+                // Translate the 1.14 client's slot numbering into the core's own
+                // here, once, so every packet carrying an InvUpdate is corrected.
+                Items.Add(Adapters.V1_14_0.InventorySlots1140.ToItemPos(slot, containerSlot));
             }
         }
 
